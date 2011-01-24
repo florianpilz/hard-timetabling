@@ -1,3 +1,5 @@
+require 'base'
+
 NUMBER_OF_PERIODS = 30
 
 # offene Fragen:
@@ -5,75 +7,6 @@ NUMBER_OF_PERIODS = 30
 # - Beweis, dass nur Austausch der Constraints die clashing hervorrufen genügt
 # - Beweis, dass Austausch von Constraints zwischen clashing_periods und nonclashing_periods genügt
 # - zurücktauschen bei brute force wichtig?
-
-class Array
-  def sum
-    inject( nil ) { |sum,x| sum ? sum+x : x }
-  end
-  
-  def mean
-    sum / size
-  end
-end
-
-class Constraint
-  attr_accessor :klass, :teacher, :room
-  
-  def initialize(values = {})
-    @klass = values[:klass]
-    @teacher = values[:teacher]
-    @room = values[:room]
-  end
-  
-  def deep_clone
-    clone = self.clone
-    clone
-  end
-  
-  def to_s
-    "Klasse: #{@klass}, Lehrer: #{@teacher}, Raum: #{@room}"
-  end
-end
-
-class Period
-  attr_accessor :constraints
-  
-  def initialize(values = {})
-    @constraints = values[:constraints]
-  end
-
-  def collisions
-    collisions = 0
-
-    @constraints.each do |constraint1|
-      @constraints.each do |constraint2|
-        if constraint1 == constraint2
-          next
-        end
-
-        if constraint1.klass == constraint2.klass or constraint1.teacher == constraint2.teacher or constraint1.room == constraint2.room
-          collisions += 1
-        end
-      end
-    end
-    collisions
-  end
-  
-  def deep_clone
-    clone = self.clone
-    clone.constraints = self.constraints.map{|c| c.deep_clone}
-    clone
-  end
-
-  def to_s
-    output = ""
-    @constraints.length.times do |i|
-      constraint = @constraints[i]
-      output << "Constraint #{i + 1}: Klasse = #{constraint.klass}, Lehrer = #{constraint.teacher}, Raum = #{constraint.room}\n"
-    end
-    output
-  end
-end
 
 class Individual
   attr_accessor :periods, :colliding_periods
