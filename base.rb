@@ -67,10 +67,10 @@ class Individual
     @constraints = constraints.map{|c| c.deep_clone}
     @colliding_periods = @periods.select{|p| p.collisions > 0}
     @old_colliding_periods = @colliding_periods
-    @rand_period_nr1 = 0
-    @rand_period_nr2 = 0
-    @rand_constraint_nr1 = 0
-    @rand_constraint_nr2 = 0
+    # @rand_period_nr1 = 0
+    # @rand_period_nr2 = 0
+    # @rand_constraint_nr1 = 0
+    # @rand_constraint_nr2 = 0
   end
   
   def collisions
@@ -82,10 +82,10 @@ class Individual
     temp_constraints = @constraints.map{|c| c.deep_clone}
     delete_constraint = nil
     @periods.each do |period|
-      period.constraints.each do |constraint1|
-        temp_constraints.each do |constraint2|
-          if constraint1.klass == constraint2.klass and constraint1.teacher == constraint2.teacher and constraint1.room == constraint2.room
-            delete_constraint = constraint2
+      period.constraints.each do |c1|
+        temp_constraints.each do |c2|
+          if c1.klass == c2.klass and c1.teacher == c2.teacher and c1.room == c2.room
+            delete_constraint = c2
             break
           end
         end
@@ -108,13 +108,13 @@ class Individual
     @colliding_periods = @periods.select{|p| p.collisions > 0}
   end
     
-  def print_last_mutation
-    unless @old_colliding_periods.include?(@periods[@rand_period_nr1])
-      puts "Colliding (#{@rand_constraint_nr2}):"
-      puts @old_colliding_periods[@rand_period_nr2]
-      puts ""
-      puts "Other (#{@rand_constraint_nr1}):"
-      puts @periods[@rand_period_nr1].to_s
-    end
-  end
+  # def print_last_mutation # TODO not used anymore
+  #   unless @old_colliding_periods.include?(@periods[@rand_period_nr1]) # TODO why is this necessary?
+  #     puts "Colliding (#{@rand_constraint_nr2}):"
+  #     puts @old_colliding_periods[@rand_period_nr2]
+  #     puts ""
+  #     puts "Other (#{@rand_constraint_nr1}):"
+  #     puts @periods[@rand_period_nr1].to_s
+  #   end
+  # end
 end

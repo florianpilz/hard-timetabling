@@ -1,16 +1,16 @@
-require 'base'
+require 'base' # contains constraint, period, individual and extension of array
 
 NUMBER_OF_PERIODS = 30
 
 class Individual
   def mutate
-    @rand_period_nr1 = rand(@periods.length)
-    @rand_constraint_nr1 = rand(@periods.first.constraints.length)
-    @rand_period_nr2 = rand(@colliding_periods.length)
-    @rand_constraint_nr2 = rand(@colliding_periods.first.constraints.length)
+    rand_period_nr1 = rand(@periods.length)
+    rand_constraint_nr1 = rand(@periods.first.constraints.length)
+    rand_period_nr2 = rand(@colliding_periods.length)
+    rand_constraint_nr2 = rand(@colliding_periods.first.constraints.length)
     
-    @periods[@rand_period_nr1].constraints[@rand_constraint_nr1], @colliding_periods[@rand_period_nr2].constraints[@rand_constraint_nr2] =
-      @colliding_periods[@rand_period_nr2].constraints[@rand_constraint_nr2], @periods[@rand_period_nr1].constraints[@rand_constraint_nr1]
+    @periods[rand_period_nr1].constraints[rand_constraint_nr1], @colliding_periods[rand_period_nr2].constraints[rand_constraint_nr2] =
+      @colliding_periods[rand_period_nr2].constraints[rand_constraint_nr2], @periods[rand_period_nr1].constraints[rand_constraint_nr1]
     self.update
   end
 end
