@@ -2,12 +2,38 @@ require 'base' # contains constraint, period, individual and extension of array
 
 NUMBER_OF_PERIODS = 30
 
-class Individual
+class SwappingBetweenPeriods < Individual
   def mutate
     rand_period_nr1 = rand(@periods.length)
     rand_constraint_nr1 = rand(@periods.first.constraints.length)
     rand_period_nr2 = rand(@colliding_periods.length)
     rand_constraint_nr2 = rand(@colliding_periods.first.constraints.length)
+    
+    @periods[rand_period_nr1].constraints[rand_constraint_nr1], @colliding_periods[rand_period_nr2].constraints[rand_constraint_nr2] =
+      @colliding_periods[rand_period_nr2].constraints[rand_constraint_nr2], @periods[rand_period_nr1].constraints[rand_constraint_nr1]
+    self.update
+  end
+end
+
+class SwappingBetweenConstraints < Individual
+  def mutate
+    rand_period_nr1 = rand(@periods.length)
+    rand_constraint_nr1 = rand(@periods.first.constraints.length)
+    rand_period_nr2 = rand(@colliding_periods.length)
+    
+    random_period = @colliding_periods[rand_period_nr2]
+    colliding_constraints = []
+    random_period.constraints.each do |c1|
+      random_period.constraints.each do |c2|
+        next if c1 == c2
+        if c1.klass == c2.klass or c1.teacher == c2.teacher or c1.room == c2.room
+          colliding_constraints << c1
+          colliding_constraints << c2
+        end
+      end
+    end
+    colliding_constraints = colliding_constraints.uniq
+    rand_constraint_nr2 = random_period.constraints.index(colliding_constraints[rand(colliding_constraints.length)])
     
     @periods[rand_period_nr1].constraints[rand_constraint_nr1], @colliding_periods[rand_period_nr2].constraints[rand_constraint_nr2] =
       @colliding_periods[rand_period_nr2].constraints[rand_constraint_nr2], @periods[rand_period_nr1].constraints[rand_constraint_nr1]
@@ -31,6 +57,7 @@ end
 #   hdtt7: nach 12 Stunden und 16kk Iterationen abgebrochen (war bei Güte 22)
 def hillclimber(individual)
   iterations = 0
+  puts "Start timetabling with " << individual.class.to_s
   
   while individual.collisions > 0 || individual.unfulfilled_constraints > 0
     new_individual = individual.deep_clone
@@ -60,7 +87,8 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
   end
   
   rooms = lines / NUMBER_OF_PERIODS
-  constraints = constraints.sort_by{rand}
+  # constraints = constraints.sort_by{rand}
+  constraints.shuffle!
   
   periods = []
   NUMBER_OF_PERIODS.times do |i|
@@ -71,7 +99,7 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
     periods << Period.new(:constraints => period_constraints)
   end
   
-  individual = Individual.new(periods, constraints)
+  individual = SwappingBetweenConstraints.new(periods, constraints)
   
   iterations = hillclimber(individual)
   puts "Iterations for random solver: #{iterations}"
