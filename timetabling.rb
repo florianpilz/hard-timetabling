@@ -2,6 +2,7 @@ require 'base' # contains constraint, period, individual and extension of array
 
 NUMBER_OF_PERIODS = 30
 
+# global optima
 class DumbSwappingBetweenPeriods < Individual
   def mutate
     rand_period_nr1 = rand(@periods.length)
@@ -15,6 +16,7 @@ class DumbSwappingBetweenPeriods < Individual
   end
 end
 
+# local optima
 class SwappingBetweenCollidingPeriods < Individual
   def mutate
     rand_period_nr1 = rand(@colliding_periods.length)
@@ -28,6 +30,7 @@ class SwappingBetweenCollidingPeriods < Individual
   end
 end
 
+# global optima
 class SwappingBetweenPeriods < Individual
   def mutate
     rand_period_nr1 = rand(@periods.length)
@@ -41,6 +44,7 @@ class SwappingBetweenPeriods < Individual
   end
 end
 
+# global optima
 class SwappingBetweenConstraints < Individual
   def mutate
     rand_period_nr1 = rand(@periods.length)
@@ -68,6 +72,34 @@ class SwappingBetweenConstraints < Individual
 end
 
 class InvertingConstraints < Individual
+  def mutate
+    constraints = []
+    @periods.each do |period|
+      constraints << period.constraints
+    end
+    constraints = constraints.flatten
+    copied_constraints = constraints.map {|c| c.deep_clone}
+    
+    rn1 = rand(constraints.length)
+    rn2 = rand(constraints.length)
+    rn1, rn2 = rn2, rn1 if rn1 > rn2
+
+    rn1.upto(rn2) do |i|
+      constraints[rn2 + rn1 - i] = copied_constraints[i]
+    end
+    
+    rooms = @periods.first.constraints.length
+    periods = []
+    NUMBER_OF_PERIODS.times do |i|
+      period_constraints = []
+      rooms.times do |j|
+        period_constraints << constraints[i * rooms + j]
+      end
+      periods << Period.new(:constraints => period_constraints)
+    end
+    @periods = periods
+    self.update
+  end
 end
 
 class MixingConstraints < Individual
@@ -138,7 +170,7 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
     periods << Period.new(:constraints => period_constraints)
   end
   
-  individual = SwappingBetweenCollidingPeriods.new(periods, constraints)
+  individual = InvertingConstraints.new(periods, constraints)
   
   iterations = hillclimber(individual)
   puts "Iterations for random solver: #{iterations}"
