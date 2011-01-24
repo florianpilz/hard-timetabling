@@ -44,7 +44,7 @@ class SwappingBetweenPeriods < Individual
   end
 end
 
-# global optima
+# global optima, 100 runs within 90min
 class SwappingBetweenConstraints < Individual
   def mutate
     rand_period_nr1 = rand(@periods.length)
@@ -88,12 +88,29 @@ class InvertingConstraints < Individual
   end
 end
 
-#     hash_string = yield value, LENGTH * dimension, fill_with
-
 class MixingConstraints < Individual
+  def mutate
+    @periods = mutate_on_constraints(@periods) do |constraints|
+      rn1 = rand(constraints.length)
+      rn2 = rand(constraints.length)
+      rn1, rn2 = rn2, rn1 if rn1 > rn2
+
+      start = constraints[0..rn1-1] # yields all constraints if range is 0..-1, next line prevents this
+      start = [] if rn1 == 0
+      
+      start + constraints[rn1..rn2].shuffle + constraints[rn2+1..constraints.length-1]
+    end
+    self.update
+  end
 end
 
 class ShiftingConstraints < Individual
+  def mutate
+    @periods = mutate_on_constraints(@periods) do |constraints|
+      constraints      
+    end
+    self.update
+  end
 end
 
 # TODO which swapping technique should be used?
@@ -179,7 +196,7 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
     periods << Period.new(:constraints => period_constraints)
   end
   
-  individual = InvertingConstraints.new(periods, constraints)
+  individual = MixingConstraints.new(periods, constraints)
   
   iterations = hillclimber(individual)
   puts "Iterations for random solver: #{iterations}"
