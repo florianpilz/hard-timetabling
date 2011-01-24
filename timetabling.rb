@@ -74,7 +74,7 @@ end
 class InvertingConstraints < Individual
   def mutate
     @periods = mutate_on_constraints(@periods) do |constraints|
-      copied_constraints = constraints.map {|c| c.deep_clone}      
+      copied_constraints = constraints.map {|c| c.deep_clone}
       rn1 = rand(constraints.length)
       rn2 = rand(constraints.length)
       rn1, rn2 = rn2, rn1 if rn1 > rn2
@@ -107,6 +107,15 @@ end
 class ShiftingConstraints < Individual
   def mutate
     @periods = mutate_on_constraints(@periods) do |constraints|
+      copied_constraints = constraints.map {|c| c.deep_clone}
+      rn1 = rand(constraints.length)
+      rn2 = rand(constraints.length)
+      rn1, rn2 = rn2, rn1 if rn1 > rn2
+      
+      constraints[rn2] = copied_constraints[rn1]
+      rn1.upto(rn2 - 1) do |i|
+        constraints[i] = copied_constraints[i + 1]
+      end
       constraints      
     end
     self.update
@@ -196,7 +205,7 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
     periods << Period.new(:constraints => period_constraints)
   end
   
-  individual = MixingConstraints.new(periods, constraints)
+  individual = ShiftingConstraints.new(periods, constraints)
   
   iterations = hillclimber(individual)
   puts "Iterations for random solver: #{iterations}"
