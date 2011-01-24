@@ -73,34 +73,22 @@ end
 
 class InvertingConstraints < Individual
   def mutate
-    constraints = []
-    @periods.each do |period|
-      constraints << period.constraints
-    end
-    constraints = constraints.flatten
-    copied_constraints = constraints.map {|c| c.deep_clone}
-    
-    rn1 = rand(constraints.length)
-    rn2 = rand(constraints.length)
-    rn1, rn2 = rn2, rn1 if rn1 > rn2
+    @periods = mutate_on_constraints(@periods) do |constraints|
+      copied_constraints = constraints.map {|c| c.deep_clone}      
+      rn1 = rand(constraints.length)
+      rn2 = rand(constraints.length)
+      rn1, rn2 = rn2, rn1 if rn1 > rn2
 
-    rn1.upto(rn2) do |i|
-      constraints[rn2 + rn1 - i] = copied_constraints[i]
-    end
-    
-    rooms = @periods.first.constraints.length
-    periods = []
-    NUMBER_OF_PERIODS.times do |i|
-      period_constraints = []
-      rooms.times do |j|
-        period_constraints << constraints[i * rooms + j]
+      rn1.upto(rn2) do |i|
+        constraints[rn2 + rn1 - i] = copied_constraints[i]
       end
-      periods << Period.new(:constraints => period_constraints)
+      constraints      
     end
-    @periods = periods
     self.update
   end
 end
+
+#     hash_string = yield value, LENGTH * dimension, fill_with
 
 class MixingConstraints < Individual
 end
@@ -110,6 +98,27 @@ end
 
 # TODO which swapping technique should be used?
 class TripleSwapping < Individual
+end
+
+def mutate_on_constraints(old_periods)
+  constraints = []
+  old_periods.each do |period|
+    constraints << period.constraints
+  end
+  constraints = constraints.flatten
+
+  constraints = yield constraints
+  
+  rooms = old_periods.first.constraints.length
+  periods = []
+  NUMBER_OF_PERIODS.times do |i|
+    period_constraints = []
+    rooms.times do |j|
+      period_constraints << constraints[i * rooms + j]
+    end
+    periods << Period.new(:constraints => period_constraints)
+  end
+  periods
 end
 
 # offene Fragen:
