@@ -1,0 +1,97 @@
+OR-Library
+
+J E Beasley
+
+OR-Library is a collection of test data sets for a variety of OR problems.
+
+A full list of the test data sets available in OR-Library can be found here.
+
+Timetabling
+
+There are currently 5 data files.
+
+These data files have been contributed by Dr. Kate Smith 
+(kate.smith@infotech.monash.edu.au) who can be contacted for
+further information about these data sets, and comparative results.
+
+These class-teacher-venue timetabling data sets were originally used by:
+
+D. Abramson and H. Dang, "School timetables: a case study in 
+simulated annealing: sequential and parallel algorithms", Lecture
+Notes in Economics and Mathematics Systems, edited by V. Vidal, 
+Springer-Verlag: Berlin, Chapter 5, pp. 103-124, 1993.
+
+Also used by:
+
+M. Randall, D. Abramson and C. Wild, "A general meta-heuristic
+based solver for combinatorial optimisation problems", Technical report
+TR99-01, School of Information Technology, Bond University, Queensland 4229,
+Australia.
+
+K. A. Smith, D. Abramson and D. Duke, "Hopfield neural networks for timetabling:
+formulations, methods, and comparative results", submitted to International
+Journal of Applied Intelligence, April 1999.
+
+**********************************************************************
+
+DESCRIPTION OF DATA FILES:
+The data files describe five timetabling problems: hdtt4, hdtt5, hdtt6,
+hdtt7, and hdtt8. "hdtt" stands for "hard timetabling", since these problems
+have been designed to be totally constrained. That is, each class, teacher,
+and venue is required for each period. The optimal objective function for
+each of these problems is zero clashes.
+
+Each problem consists of three text files. For hdtt4 these files are:
+hdtt4list (contains the list of requirements expressed as English statements
+of the form Class C1 meets teacher T3 in room R4);
+hdtt4note (contains the dimensions of the problem, in this case 4 classes,
+4 teachers, 4 rooms, 30 periods, and 120 requirements);
+hdtt4req (contains a requirements matrix extracted from the list of
+requirements).
+
+Researchers wishing to use these data sets need only consider the dimensions
+of the problem (given in hdtt4note), and the requirements matrix (given 
+in hdtt4req), which is read as follows:
+
+Suppose there are C classes, T teachers, V venues, and P periods. Then
+the first V rows of matrix indicate the number of times each class-teacher
+combination is to meet each other in venue 1 across the P periods. The next
+V rows indicate the number of times each class-teacher combination is to 
+meet each other in venue 2 across the P periods, etc.
+
+For example, in hdtt4req, the 3rd row contains a "6" in the last
+column. This means that class 3 must meet teacher 4 in room 1 six times.
+Similarly, row 5 column 2 contains a "5", meaning that class 1 must meet
+teacher 2 in room 2 five times. The grouping of rows according to venue
+is shown below for hdtt4:
+
+        teacher 1  2  3  4
+        --------------------
+   class 1      2  2  1  2  
+         2      1  1  1  2  
+         3      1  1  1  6  
+         4      2  2  3  2      venue 1
+                ------------  
+        1       2  5  1  2  
+        2       0  4  3  2  
+        3       1  2  1  0  
+        4       2  2  1  2      venue 2
+                ------------
+        1       2  1  1  2  
+        2       0  0  5  1  
+        3       2  1  4  1  
+        4       6  1  2  1      venue 3
+                ------------
+        1       3  1  2  1  
+        2       1  4  1  4  
+        3       3  3  2  1  
+        4       2  0  1  1      venue 4
+                ------------
+
+
+The entire set of files is of size 50Kb (approximately).
+Click here to access these files
+
+OTHER SOURCES
+
+Test problems are also available by anonymous ftp here
