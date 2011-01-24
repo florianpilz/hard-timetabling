@@ -2,83 +2,7 @@ require 'base'
 
 NUMBER_OF_PERIODS = 30
 
-# offene Fragen:
-# - Beweis, dass Menge von clashing_periods durch gegenseitigen Austausch nicht zwingend zur Lösung führt
-# - Beweis, dass nur Austausch der Constraints die clashing hervorrufen genügt
-# - Beweis, dass Austausch von Constraints zwischen clashing_periods und nonclashing_periods genügt
-# - zurücktauschen bei brute force wichtig?
-
 class Individual
-  attr_accessor :periods, :colliding_periods
-  
-  def initialize(periods, constraints)
-    @periods = periods
-    @constraints = constraints.map{|c| c.deep_clone}
-    @colliding_periods = @periods.select{|p| p.collisions > 0}
-    @old_colliding_periods = @colliding_periods
-    @rand_period_nr1 = 0
-    @rand_period_nr2 = 0
-    @rand_constraint_nr1 = 0
-    @rand_constraint_nr2 = 0
-  end
-  
-  def collisions
-    @colliding_periods.inject(0){|sum, p| sum += p.collisions}
-    # @colliding_periods.length
-    
-    # collisions = 0
-    # constraints = []
-    # @periods.each do |period|
-    #   constraints << period.constraints
-    # end
-    # constraints = constraints.flatten
-    # period_size = @periods.first.constraints.length
-    # NUMBER_OF_PERIODS.times do |i|
-    #   had_collision = false
-    #   (period_size - 1).times do |c1|
-    #     c1.upto(period_size - 1) do |c2|
-    #       constraint1 = constraints[period_size * i + c1]
-    #       constraint2 = constraints[period_size * i + c2]
-    #       if constraint1.klass == constraint2.klass or constraint1.teacher == constraint2.teacher or constraint1.room == constraint2.room
-    #         had_collision = true
-    #       end
-    #     end
-    #   end
-    #   collisions += 1 if had_collision
-    # end
-    # collisions
-  end
-  
-  def unfulfilled_constraints
-    temp_constraints = @constraints.map{|c| c.deep_clone}
-    delete_constraint = nil
-    @periods.each do |period|
-      period.constraints.each do |constraint1|
-        temp_constraints.each do |constraint2|
-          if constraint1.klass == constraint2.klass and constraint1.teacher == constraint2.teacher and constraint1.room == constraint2.room
-            delete_constraint = constraint2
-            break
-          end
-        end
-        temp_constraints.delete(delete_constraint) if delete_constraint != nil
-      end
-    end
-    temp_constraints.length
-  end
-  
-  def deep_clone
-    clone = self.clone
-    # clone.periods = Marshal.load(Marshal.dump(@periods))
-    clone.periods = self.periods.map{|p| p.deep_clone}
-    clone.update
-    clone
-  end
-  
-  def update
-    @old_colliding_periods = @colliding_periods
-    @colliding_periods = @periods.select{|p| p.collisions > 0}
-  end
-  
   def mutate
     @rand_period_nr1 = rand(@periods.length)
     @rand_constraint_nr1 = rand(@periods.first.constraints.length)
@@ -95,17 +19,13 @@ class Individual
     
     self.update
   end
-  
-  def print_last_mutation
-    unless @old_colliding_periods.include?(@periods[@rand_period_nr1])
-      puts "Colliding (#{@rand_constraint_nr2}):"
-      puts @old_colliding_periods[@rand_period_nr2]
-      puts ""
-      puts "Other (#{@rand_constraint_nr1}):"
-      puts @periods[@rand_period_nr1].to_s
-    end
-  end
 end
+
+# offene Fragen:
+# - Beweis, dass Menge von clashing_periods durch gegenseitigen Austausch nicht zwingend zur Lösung führt
+# - Beweis, dass nur Austausch der Constraints die clashing hervorrufen genügt
+# - Beweis, dass Austausch von Constraints zwischen clashing_periods und nonclashing_periods genügt
+# - zurücktauschen bei brute force wichtig?
 
 # nur tauschen unter kaputten periods reicht nicht aus
 # -> kaputt muss mit jeder period tauschen können

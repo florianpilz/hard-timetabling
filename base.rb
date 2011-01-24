@@ -58,3 +58,63 @@ class Period
     end
   end
 end
+
+class Individual
+  attr_accessor :periods, :colliding_periods
+  
+  def initialize(periods, constraints)
+    @periods = periods
+    @constraints = constraints.map{|c| c.deep_clone}
+    @colliding_periods = @periods.select{|p| p.collisions > 0}
+    @old_colliding_periods = @colliding_periods
+    @rand_period_nr1 = 0
+    @rand_period_nr2 = 0
+    @rand_constraint_nr1 = 0
+    @rand_constraint_nr2 = 0
+  end
+  
+  def collisions
+    @colliding_periods.inject(0){|sum, p| sum += p.collisions}
+    # @colliding_periods.length
+  end
+  
+  def unfulfilled_constraints
+    temp_constraints = @constraints.map{|c| c.deep_clone}
+    delete_constraint = nil
+    @periods.each do |period|
+      period.constraints.each do |constraint1|
+        temp_constraints.each do |constraint2|
+          if constraint1.klass == constraint2.klass and constraint1.teacher == constraint2.teacher and constraint1.room == constraint2.room
+            delete_constraint = constraint2
+            break
+          end
+        end
+        temp_constraints.delete(delete_constraint) if delete_constraint != nil
+      end
+    end
+    temp_constraints.length
+  end
+  
+  def deep_clone
+    clone = self.clone
+    # clone.periods = Marshal.load(Marshal.dump(@periods)) # short and safe, but expensive
+    clone.periods = self.periods.map{|p| p.deep_clone}
+    clone.update # FIXME should not update in clone method
+    clone
+  end
+  
+  def update
+    @old_colliding_periods = @colliding_periods
+    @colliding_periods = @periods.select{|p| p.collisions > 0}
+  end
+    
+  def print_last_mutation
+    unless @old_colliding_periods.include?(@periods[@rand_period_nr1])
+      puts "Colliding (#{@rand_constraint_nr2}):"
+      puts @old_colliding_periods[@rand_period_nr2]
+      puts ""
+      puts "Other (#{@rand_constraint_nr1}):"
+      puts @periods[@rand_period_nr1].to_s
+    end
+  end
+end
