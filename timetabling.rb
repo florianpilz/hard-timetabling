@@ -123,6 +123,7 @@ class InvertingConstraintsWithCollisionAtStartOrEnd < Individual
   end
 end
 
+# glopbal optima, 300k iterations
 class InvertingConstraintsContainingCollision < Individual
   def mutate
     @periods = mutate_on_constraints(@periods) do |constraints|
@@ -202,8 +203,82 @@ class ShiftingConstraints < Individual
   end
 end
 
-# TODO which swapping technique should be used?
-class TripleSwapping < Individual
+# global optima, 15k iterations, try variation with only one colliding period
+class TripleSwappingWithCollidingPeriod < Individual
+  def mutate
+    rnp1 = rand(@periods.length)
+    rnc1 = rand(@periods.first.constraints.length)
+    rnp2 = rand(@colliding_periods.length)
+    rnc2 = rand(@colliding_periods.first.constraints.length)
+    rnp3 = rand(@colliding_periods.length)
+    rnc3 = rand(@colliding_periods.first.constraints.length)
+    
+    c1 = @periods[rnp1].constraints[rnc1]
+    c2 = @colliding_periods[rnp2].constraints[rnc2]
+    c3 = @colliding_periods[rnp3].constraints[rnc3]
+
+    unless c1 == c3
+      @periods[rnp1].constraints[rnc1] = c2
+      @colliding_periods[rnp2].constraints[rnc2] = c3
+      @colliding_periods[rnp3].constraints[rnc3] = c1
+    else
+      @colliding_periods[rnp2].constraints[rnc2] = c3
+      @colliding_periods[rnp3].constraints[rnc3] = c2
+    end
+    self.update
+  end
+end
+
+# global optima, 6k iterations, try variation with only one colliding constraint
+class TripleSwappingWithCollidingConstraint < Individual
+  def mutate
+    rnp1 = rand(@periods.length)
+    rnc1 = rand(@periods.first.constraints.length)
+    
+    rnp2 = rand(@colliding_periods.length)
+    random_period = @colliding_periods[rnp2]
+    colliding_constraints = []
+    random_period.constraints.each do |c1|
+      random_period.constraints.each do |c2|
+        next if c1 == c2
+        if c1.klass == c2.klass or c1.teacher == c2.teacher or c1.room == c2.room
+          colliding_constraints << c1
+          colliding_constraints << c2
+        end
+      end
+    end
+    colliding_constraints = colliding_constraints.uniq
+    rnc2 = random_period.constraints.index(colliding_constraints[rand(colliding_constraints.length)])
+    
+    rnp3 = rand(@colliding_periods.length)
+    random_period = @colliding_periods[rnp3]
+    colliding_constraints = []
+    random_period.constraints.each do |c1|
+      random_period.constraints.each do |c2|
+        next if c1 == c2
+        if c1.klass == c2.klass or c1.teacher == c2.teacher or c1.room == c2.room
+          colliding_constraints << c1
+          colliding_constraints << c2
+        end
+      end
+    end
+    colliding_constraints = colliding_constraints.uniq
+    rnc3 = random_period.constraints.index(colliding_constraints[rand(colliding_constraints.length)])
+    
+    c1 = @periods[rnp1].constraints[rnc1]
+    c2 = @colliding_periods[rnp2].constraints[rnc2]
+    c3 = @colliding_periods[rnp3].constraints[rnc3]
+
+    unless c1 == c3
+      @periods[rnp1].constraints[rnc1] = c2
+      @colliding_periods[rnp2].constraints[rnc2] = c3
+      @colliding_periods[rnp3].constraints[rnc3] = c1
+    else
+      @colliding_periods[rnp2].constraints[rnc2] = c3
+      @colliding_periods[rnp3].constraints[rnc3] = c2
+    end
+    self.update
+  end
 end
 
 def mutate_on_constraints(old_periods)
@@ -285,7 +360,7 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
     periods << Period.new(:constraints => period_constraints)
   end
   
-  individual = InvertingConstraintsContainingCollision.new(periods, constraints)
+  individual = TripleSwappingWithCollidingConstraint.new(periods, constraints)
   
   iterations = hillclimber(individual)
   puts "Iterations for random solver: #{iterations}"
