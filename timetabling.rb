@@ -1,5 +1,5 @@
 require 'base' # contains constraint, period, individual and extension of array
-require 'individuals' # contains implementations of all permutating mutations
+require 'mutations' # contains implementations of all permutating mutations
 
 NUMBER_OF_PERIODS = 30
 

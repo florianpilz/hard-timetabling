@@ -226,6 +226,8 @@ class TripleSwappingWithCollidingPeriod < Individual
 end
 
 # global optima, 6k iterations, try variation with only one colliding constraint
+# hdtt5: 23k iterations, ca. 5min
+# hdtt6: 80k iterations, ca. 26min
 class TripleSwappingWithCollidingConstraint < Individual
   def mutate
     rnp1 = rand(@periods.length)
