@@ -18,7 +18,8 @@ class Constraint
   end
   
   def deep_clone
-    self.clone
+    self
+    # self.clone
   end
   
   def to_s
@@ -60,10 +61,10 @@ class Period
 end
 
 class Individual
-  attr_accessor :periods, :colliding_periods
+  attr_accessor :periods, :colliding_periods, :constraints
   
   def initialize(periods, constraints)
-    @periods = periods
+    @periods = periods.map{|p| p.deep_clone}
     @constraints = constraints.map{|c| c.deep_clone}
     @colliding_periods = @periods.select{|p| p.collisions > 0}
     @old_colliding_periods = @colliding_periods
@@ -82,7 +83,7 @@ class Individual
     # @colliding_periods.length
   end
   
-  def unfulfilled_constraints
+  def unfulfilled_constraints # FIXME yields 0 if two identical constraints only occur once
     temp_constraints = @constraints.map{|c| c.deep_clone}
     delete_constraint = nil
     @periods.each do |period|

@@ -30,6 +30,46 @@ end
 # - Beweis, dass Austausch von Constraints zwischen clashing_periods und nonclashing_periods genügt
 # - zurücktauschen bei brute force wichtig?
 
+def ordnungsrekombination(individual1, individual2)
+  periods = mutate_on_constraints(individual1.periods) do |individual1_constraints|
+    constraints = []
+    rn = rand(individual1_constraints.length)
+    0.upto(rn) do |i|
+      constraints << individual1_constraints[i]
+    end
+    mutate_on_constraints(individual2.periods) do |individual2_constraints|
+      individual2_constraints.each do |constraint|
+        constraints << constraint unless constraints.include?(constraint)
+      end
+      constraints
+    end
+    constraints
+  end
+  Individual.new(periods, individual1.constraints)
+end
+
+def dual_hillclimber(individual1, individual2)
+  iterations = 0
+  puts "Start hillclimber with two individuals using recombination"
+
+  while individual1.fitness > 0 and individual2.fitness > 0
+    iterations += 1
+
+    individuals = []
+    1.times do
+      individuals << ordnungsrekombination(individual1, individual2)
+      individuals << ordnungsrekombination(individual2, individual1)
+    end
+    individuals += [individual1, individual2] # place old individuals at the end to prefer childs when fitness is same
+
+    individual1, individual2 = individuals.sort_by(&:fitness).take(2)
+    puts "Iterations: #{iterations}, unfulfilled constraints: #{individual1.unfulfilled_constraints}, collisions: #{individual1.collisions}" if iterations % 1000 == 0
+    puts "Iterations: #{iterations}, unfulfilled constraints: #{individual2.unfulfilled_constraints}, collisions: #{individual2.collisions}" if iterations % 1000 == 0
+  end
+
+  iterations
+end
+
 # nur tauschen unter kaputten periods reicht nicht aus
 # -> kaputt muss mit jeder period tauschen können
 # aber scheinbar erlaubtes Constraint: es müssen zwischenzeitlich nicht mehr periods kaputt gemacht werden um zur optimalen Lösung zu gelangen
@@ -80,9 +120,14 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
     periods << Period.new(:constraints => period_constraints)
   end
   
-  individual = TripleSwappingWithCollidingConstraint.new(periods, constraints)
+  individual1 = Individual.new(periods, constraints)
+  new_periods = mutate_on_constraints(periods) do |temp_constraints|
+    temp_constraints.shuffle
+  end
+  individual2 = Individual.new(new_periods, constraints)
   
-  iterations = hillclimber(individual)
+  # iterations = hillclimber(individual)
+  iterations = dual_hillclimber(individual1, individual2)
   puts "Iterations for random solver: #{iterations}"
   puts "Runtime in seconds: #{Time.new - time}"
 end
