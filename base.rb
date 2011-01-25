@@ -73,6 +73,10 @@ class Individual
     # @rand_constraint_nr2 = 0
   end
   
+  def fitness
+    self.collisions + self.unfulfilled_constraints
+  end
+  
   def collisions
     @colliding_periods.inject(0){|sum, p| sum += p.collisions}
     # @colliding_periods.length

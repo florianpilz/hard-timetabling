@@ -42,13 +42,11 @@ def hillclimber(individual)
   iterations = 0
   puts "Start timetabling with " << individual.class.to_s
   
-  while individual.collisions > 0 || individual.unfulfilled_constraints > 0
+  while individual.fitness > 0
     new_individual = individual.deep_clone
     new_individual.mutate
     iterations += 1
-    unless (new_individual.unfulfilled_constraints + new_individual.collisions) > (individual.unfulfilled_constraints + individual.collisions)
-      individual = new_individual
-    end
+    individual, _ = [new_individual, individual].sort_by(&:fitness) # its important that new_individual is set before individual, so its preferred if both have the same fitness -- influences algorithm a big deal
     puts "Iterations: #{iterations}, unfulfilled constraints: #{individual.unfulfilled_constraints}, collisions: #{individual.collisions}" if iterations % 1000 == 0
   end
   
