@@ -2,7 +2,7 @@ require 'base' # contains constraint, period, individual and extension of array
 
 NUMBER_OF_PERIODS = 30
 
-# global optima
+# global optima
 class DumbSwappingBetweenPeriods < Individual
   def mutate
     rand_period_nr1 = rand(@periods.length)
@@ -16,7 +16,7 @@ class DumbSwappingBetweenPeriods < Individual
   end
 end
 
-# local optima
+# local optima, runs fast into local optima
 class SwappingBetweenCollidingPeriods < Individual
   def mutate
     rand_period_nr1 = rand(@colliding_periods.length)
@@ -30,7 +30,7 @@ class SwappingBetweenCollidingPeriods < Individual
   end
 end
 
-# global optima
+# global optima
 class SwappingBetweenPeriods < Individual
   def mutate
     rand_period_nr1 = rand(@periods.length)
@@ -71,6 +71,7 @@ class SwappingBetweenConstraints < Individual
   end
 end
 
+# global optima, 700k Iterations
 class InvertingConstraints < Individual
   def mutate
     @periods = mutate_on_constraints(@periods) do |constraints|
@@ -88,6 +89,84 @@ class InvertingConstraints < Individual
   end
 end
 
+# global optima, 100k iterations
+class InvertingConstraintsWithCollisionAtStartOrEnd < Individual
+  def mutate
+    @periods = mutate_on_constraints(@periods) do |constraints|
+      copied_constraints = constraints.map {|c| c.deep_clone}
+
+      rand_period = rand(@colliding_periods.length)
+      random_period = @colliding_periods[rand_period]
+      colliding_constraints = []
+      random_period.constraints.each do |c1|
+        random_period.constraints.each do |c2|
+          next if c1 == c2
+          if c1.klass == c2.klass or c1.teacher == c2.teacher or c1.room == c2.room
+            colliding_constraints << c1
+            colliding_constraints << c2
+          end
+        end
+      end
+      colliding_constraints = colliding_constraints.uniq
+      rand_constraint = colliding_constraints[rand(colliding_constraints.length)]
+      
+      rn1 = constraints.index(rand_constraint)
+      rn2 = rand(constraints.length)
+      rn1, rn2 = rn2, rn1 if rn1 > rn2
+
+      rn1.upto(rn2) do |i|
+        constraints[rn2 + rn1 - i] = copied_constraints[i]
+      end
+      constraints      
+    end
+    self.update
+  end
+end
+
+class InvertingConstraintsContainingCollision < Individual
+  def mutate
+    @periods = mutate_on_constraints(@periods) do |constraints|
+      copied_constraints = constraints.map {|c| c.deep_clone}
+
+      rand_period = rand(@colliding_periods.length)
+      random_period = @colliding_periods[rand_period]
+      colliding_constraints = []
+      random_period.constraints.each do |c1|
+        random_period.constraints.each do |c2|
+          next if c1 == c2
+          if c1.klass == c2.klass or c1.teacher == c2.teacher or c1.room == c2.room
+            colliding_constraints << c1
+            colliding_constraints << c2
+          end
+        end
+      end
+      colliding_constraints = colliding_constraints.uniq
+      rand_constraint = colliding_constraints[rand(colliding_constraints.length)]
+      
+      middle = constraints.index(rand_constraint)
+      length = rand(constraints.length) + 1
+      if (middle - length / 2 < 0)
+        index_start = 0
+        index_end = length - 1
+      elsif (middle + length / 2 + length % 2 - 1 > constraints.length - 1)
+        index_start = constraints.length - length
+        index_end = constraints.length - 1
+      else
+        index_start = middle - length / 2
+        index_end = middle + length / 2 + length % 2 - 1
+      end
+      
+      index_start.upto(index_end) do |i|
+        constraints[index_start + index_end - i] = copied_constraints[i]
+      end
+      constraints      
+    end
+    self.update
+  end
+end
+
+# theoretically global optima possible, practically local optima (too slow, 4kk iterations till 30 collisions)
+# no domaoin specific knowledge usable, i.e. collisions
 class MixingConstraints < Individual
   def mutate
     @periods = mutate_on_constraints(@periods) do |constraints|
@@ -104,6 +183,7 @@ class MixingConstraints < Individual
   end
 end
 
+# local optima, 4.4kk iterations
 class ShiftingConstraints < Individual
   def mutate
     @periods = mutate_on_constraints(@periods) do |constraints|
@@ -205,7 +285,7 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
     periods << Period.new(:constraints => period_constraints)
   end
   
-  individual = ShiftingConstraints.new(periods, constraints)
+  individual = InvertingConstraintsContainingCollision.new(periods, constraints)
   
   iterations = hillclimber(individual)
   puts "Iterations for random solver: #{iterations}"
