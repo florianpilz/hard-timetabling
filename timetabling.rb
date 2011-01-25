@@ -79,6 +79,72 @@ def mapping_recombination(individual1, individual2)
   Individual.new(periods, individual1.constraints)
 end
 
+def edge_recombination(individual1, individual2)
+  periods = mutate_on_constraints(individual1.periods) do |individual1_constraints|
+    l = individual1_constraints.length
+    constraints = []
+    used_nodes = []
+    edges = {}
+    
+    individual1_constraints.each do |c|
+      edges[c.hash.to_s.to_sym] = []
+    end
+    
+    individual1_constraints.each_with_index do |c, i|
+      c1 = individual1_constraints[(i + 1) % l]
+      c2 = individual1_constraints[(i - 1) % l]
+      edges[c.hash.to_s.to_sym] << c1 << c2
+    end
+    
+    mutate_on_constraints(individual2.periods) do |individual2_constraints|
+      
+      individual2_constraints.each_with_index do |c, i|
+        c1 = individual2_constraints[(i + 1) % l]
+        c2 = individual2_constraints[(i - 1) % l]
+        edges[c.hash.to_s.to_sym] << c1 << c2
+      end
+            
+      if rand(2) > 0
+        constraints[0] = individual1_constraints.first
+        used_nodes << individual1_constraints.first
+      else
+        constraints[0] = individual2_constraints.first
+        used_nodes << individual2_constraints.first
+      end
+      
+      individual2_constraints
+    end
+    
+    1.upto(l - 1) do |i|
+      possibilities = edges[constraints.last.hash.to_s.to_sym] - used_nodes
+      possibilities = possibilities.sort_by { |c| (edges[c.hash.to_s.to_sym] - used_nodes).length }
+      
+      k = []
+      unless possibilities.empty?
+        i = 0
+        while i < possibilities.length and (edges[possibilities[0].hash.to_s.to_sym] - used_nodes).length == (edges[possibilities[i].hash.to_s.to_sym] - used_nodes).length
+          k << possibilities[i]
+          i += 1
+        end
+      end
+      
+      if k.empty?
+        temp_constraints = individual1_constraints - used_nodes
+        node = temp_constraints[rand(temp_constraints.length)]
+        constraints << node
+        used_nodes << node
+      else
+        node = k[rand(k.length)]
+        constraints << node
+        used_nodes << node
+      end
+    end
+    
+    constraints
+  end
+  Individual.new(periods, individual1.constraints)
+end
+
 def dual_hillclimber(individual1, individual2)
   iterations = 0
   puts "Start hillclimber with two individuals using recombination"
@@ -88,8 +154,8 @@ def dual_hillclimber(individual1, individual2)
 
     individuals = []
     19.times do
-      individuals << mapping_recombination(individual1, individual2)
-      individuals << mapping_recombination(individual2, individual1)
+      individuals << edge_recombination(individual1, individual2)
+      individuals << edge_recombination(individual2, individual1)
     end
     individuals += [individual1, individual2] # place old individuals at the end to prefer childs when fitness is same
 
