@@ -45,7 +45,7 @@ def ordnungsrekombination(individual1, individual2)
     end
     constraints
   end
-  Individual.new(periods, individual1.constraints)
+  MixingConstraints.new(periods, individual1.constraints)
 end
 
 def mapping_recombination(individual1, individual2)
@@ -76,7 +76,7 @@ def mapping_recombination(individual1, individual2)
     end
     constraints
   end
-  Individual.new(periods, individual1.constraints)
+  MixingConstraints.new(periods, individual1.constraints)
 end
 
 def edge_recombination(individual1, individual2)
@@ -142,26 +142,26 @@ def edge_recombination(individual1, individual2)
     
     constraints
   end
-  Individual.new(periods, individual1.constraints)
+  MixingConstraints.new(periods, individual1.constraints)
 end
 
-def dual_hillclimber(individual1, individual2)
+def dual_hillclimber(individuals)
+  population_size = individuals.length
   iterations = 0
   puts "Start hillclimber with two individuals using recombination"
 
-  while individual1.fitness > 0 and individual2.fitness > 0
+  while individuals.sort_by(&:fitness).first.fitness > 0
     iterations += 1
 
-    individuals = []
-    19.times do
-      individuals << edge_recombination(individual1, individual2)
-      individuals << edge_recombination(individual2, individual1)
+    new_individuals = []
+    population_size.times do
+      individuals << edge_recombination(individuals[rand(individuals.length)], individuals[rand(individuals.length)])
     end
-    individuals += [individual1, individual2] # place old individuals at the end to prefer childs when fitness is same
+    new_individuals.each(&:mutate)
+    new_individuals += individuals # place old individuals at the end to prefer childs when fitness is same
 
-    individual1, individual2 = individuals.sort_by(&:fitness).take(2)
-    puts "Iterations: #{iterations}, unfulfilled constraints: #{individual1.unfulfilled_constraints}, collisions: #{individual1.collisions}"
-    puts "Iterations: #{iterations}, unfulfilled constraints: #{individual2.unfulfilled_constraints}, collisions: #{individual2.collisions}"
+    individuals = individuals.sort_by(&:fitness).take(population_size)
+    puts "Iterations: #{iterations}, unfulfilled constraints: #{individuals.first.unfulfilled_constraints}, collisions: #{individuals.first.collisions}"
   end
 
   iterations
@@ -217,14 +217,16 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
     periods << Period.new(:constraints => period_constraints)
   end
   
-  individual1 = Individual.new(periods, constraints)
-  new_periods = mutate_on_constraints(periods) do |temp_constraints|
-    temp_constraints.shuffle
+  individuals = []
+  10.times do
+    new_periods = mutate_on_constraints(periods) do |temp_constraints|
+      temp_constraints.shuffle
+    end
+    individuals << MixingConstraints.new(new_periods, constraints)
   end
-  individual2 = Individual.new(new_periods, constraints)
-  
+
   # iterations = hillclimber(individual)
-  iterations = dual_hillclimber(individual1, individual2)
+  iterations = dual_hillclimber(individuals)
   puts "Iterations for random solver: #{iterations}"
   puts "Runtime in seconds: #{Time.new - time}"
 end
