@@ -48,6 +48,37 @@ def ordnungsrekombination(individual1, individual2)
   Individual.new(periods, individual1.constraints)
 end
 
+def mapping_recombination(individual1, individual2)
+  periods = mutate_on_constraints(individual1.periods) do |individual1_constraints|
+    constraints = []
+    rn_start = rand(individual1_constraints.length)
+    rn_end = rand(individual1_constraints.length)
+    rn_start, rn_end = rn_end, rn_start if rn_start > rn_end
+    
+    rn_start.upto(rn_end) do |i|
+      constraints[i] = individual1_constraints[i]
+    end
+    
+    mutate_on_constraints(individual2.periods) do |individual2_constraints|
+      0.upto(rn_start - 1) do |i|
+        c = individual2_constraints[i]
+        c = individual1_constraints[individual2_constraints.index(c)] while constraints.include?(c)
+        constraints[i] = c
+      end
+
+      (rn_end + 1).upto(individual2_constraints.length - 1) do |i|
+        c = individual2_constraints[i]
+        c = individual1_constraints[individual2_constraints.index(c)] while constraints.include?(c)
+        constraints[i] = c
+      end
+
+      constraints
+    end
+    constraints
+  end
+  Individual.new(periods, individual1.constraints)
+end
+
 def dual_hillclimber(individual1, individual2)
   iterations = 0
   puts "Start hillclimber with two individuals using recombination"
@@ -56,15 +87,15 @@ def dual_hillclimber(individual1, individual2)
     iterations += 1
 
     individuals = []
-    1.times do
-      individuals << ordnungsrekombination(individual1, individual2)
-      individuals << ordnungsrekombination(individual2, individual1)
+    19.times do
+      individuals << mapping_recombination(individual1, individual2)
+      individuals << mapping_recombination(individual2, individual1)
     end
     individuals += [individual1, individual2] # place old individuals at the end to prefer childs when fitness is same
 
     individual1, individual2 = individuals.sort_by(&:fitness).take(2)
-    puts "Iterations: #{iterations}, unfulfilled constraints: #{individual1.unfulfilled_constraints}, collisions: #{individual1.collisions}" if iterations % 1000 == 0
-    puts "Iterations: #{iterations}, unfulfilled constraints: #{individual2.unfulfilled_constraints}, collisions: #{individual2.collisions}" if iterations % 1000 == 0
+    puts "Iterations: #{iterations}, unfulfilled constraints: #{individual1.unfulfilled_constraints}, collisions: #{individual1.collisions}"
+    puts "Iterations: #{iterations}, unfulfilled constraints: #{individual2.unfulfilled_constraints}, collisions: #{individual2.collisions}"
   end
 
   iterations
