@@ -45,7 +45,7 @@ def ordnungsrekombination(individual1, individual2)
     end
     constraints
   end
-  MixingConstraints.new(periods, individual1.constraints)
+  individual1.class.new(periods, individual1.constraints)
 end
 
 def mapping_recombination(individual1, individual2)
@@ -76,10 +76,10 @@ def mapping_recombination(individual1, individual2)
     end
     constraints
   end
-  MixingConstraints.new(periods, individual1.constraints)
+  individual1.class.new(periods, individual1.constraints)
 end
 
-def edge_recombination(individual1, individual2)
+def edge_recombination(individual1, individual2, variation = 0)
   periods = mutate_on_constraints(individual1.periods) do |individual1_constraints|
     l = individual1_constraints.length
     constraints = []
@@ -117,15 +117,45 @@ def edge_recombination(individual1, individual2)
     
     1.upto(l - 1) do |i|
       possibilities = edges[constraints.last.hash.to_s.to_sym] - used_nodes
-      possibilities = possibilities.sort_by { |c| (edges[c.hash.to_s.to_sym] - used_nodes).length }
+      if variation == 0
+        possibilities = possibilities.sort_by { |c| (edges[c.hash.to_s.to_sym] - used_nodes).length }
+      elsif variation == 1 # variation which orderes by least collisions with neighbours
+        possibilities = possibilities.sort_by { |c| calc_collisions(constraints.last, c) }
+      else # another variant with least collisions between last #rooms nodes
+        rooms = individual1.periods.first.constraints.length
+        last_index = constraints.index(constraints.last)
+        latest_constraints = []
+        (last_index - rooms + 1).upto(last_index) do |i|
+          next if i < 0
+          latest_constraints << constraints[i]
+        end
+        
+        possibilities = possibilities.sort_by do |c1|
+          collisions = 0
+          collisions += latest_constraints.map { |c2| calc_collisions(c1, c2) }.sum
+          collisions
+        end
+      end
       
       k = []
       unless possibilities.empty?
         i = 0
-        while i < possibilities.length and (edges[possibilities[0].hash.to_s.to_sym] - used_nodes).length == (edges[possibilities[i].hash.to_s.to_sym] - used_nodes).length
-          k << possibilities[i]
-          i += 1
-        end
+        if variation == 0 #######################
+          while i < possibilities.length and (edges[possibilities[0].hash.to_s.to_sym] - used_nodes).length == (edges[possibilities[i].hash.to_s.to_sym] - used_nodes).length
+            k << possibilities[i]
+            i += 1
+          end
+        elsif variation == 1        
+          while i < possibilities.length and calc_collisions(constraints.last, possibilities[0]) == calc_collisions(constraints.last, possibilities[i])
+            k << possibilities[i]
+            i += 1
+          end
+        else
+          while i < possibilities.length and latest_constraints.map{|c| calc_collisions(c, possibilities[0])}.sum == latest_constraints.map{|c| calc_collisions(c, possibilities[i])}.sum
+            k << possibilities[i]
+            i += 1
+          end
+        end #########################################
       end
       
       if k.empty?
@@ -142,25 +172,33 @@ def edge_recombination(individual1, individual2)
     
     constraints
   end
-  MixingConstraints.new(periods, individual1.constraints)
+  individual1.class.new(periods, individual1.constraints)
+end
+
+def calc_collisions(c1, c2)
+  collisions = 0
+  collisions += 1 if c1.klass == c2.klass
+  collisions += 1 if c1.teacher == c2.teacher
+  collisions += 1 if c1.room == c2.room
+  collisions
 end
 
 def dual_hillclimber(individuals)
   population_size = individuals.length
   iterations = 0
-  puts "Start hillclimber with two individuals using recombination"
+  puts "Start timetabling with #{population_size} individuals, mutation: #{individuals.first.class}"
 
   while individuals.sort_by(&:fitness).first.fitness > 0
     iterations += 1
 
     new_individuals = []
     population_size.times do
-      individuals << edge_recombination(individuals[rand(individuals.length)], individuals[rand(individuals.length)])
+      new_individuals << edge_recombination(individuals[rand(individuals.length)], individuals[rand(individuals.length)], 2)
     end
     new_individuals.each(&:mutate)
     new_individuals += individuals # place old individuals at the end to prefer childs when fitness is same
 
-    individuals = individuals.sort_by(&:fitness).take(population_size)
+    individuals = new_individuals.sort_by(&:fitness).take(population_size)
     puts "Iterations: #{iterations}, unfulfilled constraints: #{individuals.first.unfulfilled_constraints}, collisions: #{individuals.first.collisions}"
   end
 
@@ -224,9 +262,9 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
     end
     individuals << MixingConstraints.new(new_periods, constraints)
   end
-
-  # iterations = hillclimber(individual)
   iterations = dual_hillclimber(individuals)
+
+  # iterations = hillclimber(TripleSwappingWithCollidingConstraint.new(periods, constraints))
   puts "Iterations for random solver: #{iterations}"
   puts "Runtime in seconds: #{Time.new - time}"
 end
