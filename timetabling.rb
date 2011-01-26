@@ -213,16 +213,27 @@ end
 #   hdtt5: ~ 10 Minuten, 300k-400k Iterationen
 #   hdtt6: ~6.5 Stunden, 7.7kk Iterationen
 #   hdtt7: nach 12 Stunden und 16kk Iterationen abgebrochen (war bei Güte 22)
-def hillclimber(individual)
+def hillclimber(individual, limit = 0)
   iterations = 0
-  puts "Start timetabling with " << individual.class.to_s
+  puts "=== Start hillclimber with " << individual.class.to_s
+  time = Time.now
   
-  while individual.fitness > 0
+  while individual.fitness > 0 and ((Time.now - time) < limit or limit == 0)
     new_individual = individual.deep_clone
     new_individual.mutate
     iterations += 1
+    
+    if new_individual.fitness < individual.fitness
+      puts "Iterations: #{iterations}, collisions: #{new_individual.collisions}, valid: #{new_individual.unfulfilled_constraints == 0}, time: #{Time.now - time}"
+    end
+    
     individual, _ = [new_individual, individual].sort_by(&:fitness) # its important that new_individual is set before individual, so its preferred if both have the same fitness -- influences algorithm a big deal
-    puts "Iterations: #{iterations}, unfulfilled constraints: #{individual.unfulfilled_constraints}, collisions: #{individual.collisions}" if iterations % 1000 == 0
+  end
+  
+  if individual.fitness == 0
+    puts "=== finished, time: #{Time.now - time}"
+  else
+    puts "=== unfinished, time: #{Time.now - time}"
   end
   
   iterations
@@ -233,8 +244,8 @@ def parse_constraint(text_constraint)
   Constraint.new(:klass => klass, :teacher => teacher, :room => room)
 end
 
-File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
-  time = Time.new
+timetable_data = ARGV[0] || 4
+File.open("hard-timetabling-data/hdtt#{timetable_data}list.txt", "r") do |file|
   constraints = []
   lines = 0
   while line = file.gets
@@ -243,7 +254,6 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
   end
   
   rooms = lines / NUMBER_OF_PERIODS
-  # constraints = constraints.sort_by{rand}
   constraints.shuffle!
   
   periods = []
@@ -255,16 +265,19 @@ File.open("hard-timetabling-data/hdtt4list.txt", "r") do |file|
     periods << Period.new(:constraints => period_constraints)
   end
   
-  individuals = []
-  10.times do
-    new_periods = mutate_on_constraints(periods) do |temp_constraints|
-      temp_constraints.shuffle
-    end
-    individuals << MixingConstraints.new(new_periods, constraints)
+  # individuals = []
+  # 10.times do
+  #   new_periods = mutate_on_constraints(periods) do |temp_constraints|
+  #     temp_constraints.shuffle
+  #   end
+  #   individuals << TripleSwappingWithCollidingConstraint.new(new_periods, constraints)
+  # end
+  # iterations = dual_hillclimber(individuals)
+  
+  time = Time.now
+  limit = ARGV[1].to_f || 0
+  100.times do
+    iterations = hillclimber(TripleSwappingWithCollidingConstraint.new(periods, constraints), limit)
+    puts "--- iterations: #{iterations}, summed up runtime: #{Time.now - time}"
   end
-  iterations = dual_hillclimber(individuals)
-
-  # iterations = hillclimber(TripleSwappingWithCollidingConstraint.new(periods, constraints))
-  puts "Iterations for random solver: #{iterations}"
-  puts "Runtime in seconds: #{Time.new - time}"
 end
