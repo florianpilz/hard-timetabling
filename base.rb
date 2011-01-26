@@ -39,7 +39,10 @@ class Period
     @constraints.each do |c1|
       @constraints.each do |c2|
         next if c1 == c2
-        collisions += 1 if c1.klass == c2.klass or c1.teacher == c2.teacher or c1.room == c2.room
+        # collisions += 1 if c1.klass == c2.klass or c1.teacher == c2.teacher or c1.room == c2.room
+        collisions += 1 if c1.klass == c2.klass
+        collisions += 1 if c1.teacher == c2.teacher
+        collisions += 1 if c1.room == c2.room
       end
     end
     collisions
