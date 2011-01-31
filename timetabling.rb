@@ -243,11 +243,11 @@ end
 #   hdtt7: nach 12 Stunden und 16kk Iterationen abgebrochen (war bei Güte 22)
 def hillclimber(individual, limit = 0)
   iterations = 0
-  puts "=== Start hillclimber with " << individual.class.to_s
+  puts "=== Start hillclimber with " << individual.to_s
   time = Time.now
   
   while individual.fitness > 0 and ((Time.now - time) < limit or limit == 0)
-    new_individual = individual.deep_clone
+    new_individual = individual.copy
     new_individual.mutate
     iterations += 1
     
@@ -282,16 +282,19 @@ File.open("hard-timetabling-data/hdtt#{timetable_data}list.txt", "r") do |file|
   end
   
   rooms = lines / NUMBER_OF_PERIODS
-  constraints.shuffle!
   
-  periods = []
-  NUMBER_OF_PERIODS.times do |i|
-    period_constraints = []
-    rooms.times do |j|
-      period_constraints << constraints[i * rooms + j]
-    end
-    periods << Period.new(:constraints => period_constraints)
+  method = lambda do |individual|
+    r1 = individual.constraints.rand_index
+    r2 = individual.constraints.rand_index
+
+    individual.constraints[r1], individual.constraints[r2] = individual.constraints[r2], individual.constraints[r1]
   end
+  dumb_swapping = Mutation.new("DumbSwapping", method)
+
+  method = lambda do |individual1, individual2|
+    [individual1.copy, individual2.copy]
+  end
+  identity = Recombination.new("Identity", method)
   
   # individuals = []
   # 10.times do
@@ -301,11 +304,17 @@ File.open("hard-timetabling-data/hdtt#{timetable_data}list.txt", "r") do |file|
   #   individuals << TripleSwappingWithCollidingConstraint.new(new_periods, constraints)
   # end
   # iterations = dual_hillclimber(individuals)
-  
   time = Time.now
   limit = ARGV[1].to_f || 0
+  individual = Individual.new(
+    :current_constraints => constraints.shuffle,
+    :expected_constraints => constraints,
+    :mutation => dumb_swapping,
+    :recombination => identity,
+    :slot_size => lines / NUMBER_OF_PERIODS
+  )
   # 100.times do
-    iterations = hillclimber(OwnIndividual.new(periods, constraints), limit)
+    iterations = hillclimber(individual, limit)
     puts "--- iterations: #{iterations}, summed up runtime: #{Time.now - time}"
   # end
 end
