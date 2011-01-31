@@ -1,4 +1,5 @@
 # global optima
+# hdtt4: 128k iterations, ca. 10min
 class DumbSwappingBetweenPeriods < Individual
   def mutate
     rand_period_nr1 = rand(@periods.length)
@@ -41,6 +42,7 @@ class SwappingBetweenPeriods < Individual
 end
 
 # global optima, 100 runs within 90min
+# ran into local optima with hdtt8: reached 4 collisions after 100k iterations, still at 4 collisions after 3k iterations
 class SwappingBetweenConstraints < Individual
   def mutate
     rand_period_nr1 = rand(@periods.length)
@@ -200,6 +202,8 @@ class ShiftingConstraints < Individual
 end
 
 # global optima, 15k iterations, try variation with only one colliding period
+# hdtt4: 18k iterations, 80s
+# hdtt5: 60k iterations, ca. 8min
 class TripleSwappingWithCollidingPeriod < Individual
   def mutate
     rnp1 = rand(@periods.length)
@@ -228,6 +232,7 @@ end
 # global optima, 6k iterations, try variation with only one colliding constraint
 # hdtt5: 23k iterations, ca. 5min
 # hdtt6: 80k iterations, ca. 26min
+# ran into local optima in hdtt7: reacher 6 remaining collisions after 100k iterations, still have 6 remaining after 3kk iterations
 class TripleSwappingWithCollidingConstraint < Individual
   def mutate
     rnp1 = rand(@periods.length)
@@ -275,6 +280,16 @@ class TripleSwappingWithCollidingConstraint < Individual
       @colliding_periods[rnp2].constraints[rnc2] = c3
       @colliding_periods[rnp3].constraints[rnc3] = c2
     end
+    self.update
+  end
+end
+
+class OwnIndividual < Individual
+  def mutate
+    periods = mutate_on_constraints(@colliding_periods) do |constraints|
+      constraints.shuffle! # krass schlecht
+    end
+    @periods = @periods - @colliding_periods + periods
     self.update
   end
 end
