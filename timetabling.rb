@@ -247,8 +247,7 @@ def hillclimber(individual, limit = 0)
   time = Time.now
   
   while individual.fitness > 0 and ((Time.now - time) < limit or limit == 0)
-    new_individual = individual.copy
-    new_individual.mutate
+    new_individual = individual.mutate
     iterations += 1
     
     if new_individual.fitness < individual.fitness
@@ -283,19 +282,6 @@ File.open("hard-timetabling-data/hdtt#{timetable_data}list.txt", "r") do |file|
   
   rooms = lines / NUMBER_OF_PERIODS
   
-  method = lambda do |individual|
-    r1 = individual.constraints.rand_index
-    r2 = individual.constraints.rand_index
-
-    individual.constraints[r1], individual.constraints[r2] = individual.constraints[r2], individual.constraints[r1]
-  end
-  dumb_swapping = Mutation.new("DumbSwapping", method)
-
-  method = lambda do |individual1, individual2|
-    [individual1.copy, individual2.copy]
-  end
-  identity = Recombination.new("Identity", method)
-  
   # individuals = []
   # 10.times do
   #   new_periods = mutate_on_constraints(periods) do |temp_constraints|
@@ -309,8 +295,8 @@ File.open("hard-timetabling-data/hdtt#{timetable_data}list.txt", "r") do |file|
   individual = Individual.new(
     :current_constraints => constraints.shuffle,
     :expected_constraints => constraints,
-    :mutation => dumb_swapping,
-    :recombination => identity,
+    :mutation => DumbSwapping.new,
+    :recombination => Identity.new,
     :slot_size => lines / NUMBER_OF_PERIODS
   )
   # 100.times do

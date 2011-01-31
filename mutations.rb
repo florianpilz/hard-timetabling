@@ -1,3 +1,35 @@
+class Mutation
+end
+
+class DumbSwapping < Mutation
+  def to_s
+    "DumbSwapping"
+  end
+  
+  def call(individual)
+    child = individual.copy
+    r1 = child.constraints.rand_index
+    r2 = child.constraints.rand_index
+
+    child.constraints[r1], child.constraints[r2] = child.constraints[r2], child.constraints[r1]
+    child.eval_fitness
+    child
+  end
+end
+
+class Recombination
+end
+
+class Identity < Recombination
+  def to_s
+    "Identity"
+  end
+  
+  def call(individual1, individual2)
+    [individual1.copy, individual2.copy]
+  end
+end
+
 # global optima
 # hdtt4: 128k iterations, ca. 10min
 class DumbSwappingBetweenPeriods < Individual

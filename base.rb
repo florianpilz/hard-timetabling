@@ -33,7 +33,7 @@ class Constraint
 end
 
 class Individual
-  attr_accessor :constraints
+  attr_accessor :constraints, :collisions, :unfulfilled_constraints
   
   def initialize(values = {})
     values = {:granularity => 0, :debug => false}.merge(values)
@@ -44,10 +44,11 @@ class Individual
     @granularity          = values[:granularity]
     @debug                = values[:debug]
     @slot_size            = values[:slot_size]
+    self.eval_fitness
   end
   
   def to_s
-    "Individual with mutation #{@mutation.name} and recombination #{@recombination.name}"
+    "Individual with mutation #{@mutation.to_s} and recombination #{@recombination.to_s}"
   end
   
   def copy
@@ -56,19 +57,27 @@ class Individual
     individual
   end
   
-  def mutate
-    @mutation.method.call(self)
+  def mutate # must return individual
+    @mutation.call(self)
   end
   
-  def recombinate_with(individual)
-    @recombination.method.call(self, individual)
+  def recombinate_with(individual) # must return two individuals
+    @recombination.call(self, individual)
   end
   
   def fitness
-    self.collisions + self.unfulfilled_constraints
+    @collisions + @unfulfilled_constraints
   end
   
-  def collisions
+  def eval_fitness
+    @collisions = eval_collisions
+    @unfulfilled_constraints = eval_unfulfilled_constraints
+    fitness
+  end
+  
+  private
+  
+  def eval_collisions
     collisions = 0
     NUMBER_OF_SLOTS.times do |n|
       old_collisions = collisions
@@ -96,7 +105,7 @@ class Individual
     collisions
   end
   
-  def unfulfilled_constraints
+  def eval_unfulfilled_constraints
     return 0 unless @debug # assume all constraints are fulfilled unless in debug mode
     
     # FIXME yields 0 if two identical constraints only occur once => should be solved
@@ -115,16 +124,4 @@ class Individual
     
     expected_constraints.length
   end
-end
-
-class Mutation
-  attr_reader :name, :method
-  
-  def initialize(name, method)
-    @name = name
-    @method = method
-  end
-end
-
-class Recombination < Mutation
 end
