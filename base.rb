@@ -8,6 +8,14 @@ class Array
   def mean
     sum / size
   end
+  
+  def rand_index
+    rand(self.length)
+  end
+  
+  def sample
+    self[rand_index]
+  end
 end
 
 class Constraint
@@ -49,11 +57,11 @@ class Individual
   end
   
   def mutate
-    @mutation.call(self)
+    @mutation.method.call(self)
   end
   
   def recombinate_with(individual)
-    @recombination.call(self, individual)
+    @recombination.method.call(self, individual)
   end
   
   def fitness
@@ -89,7 +97,7 @@ class Individual
   end
   
   def unfulfilled_constraints
-    return 0 unless debug # assume all constraints are fulfilled unless in debug mode
+    return 0 unless @debug # assume all constraints are fulfilled unless in debug mode
     
     # FIXME yields 0 if two identical constraints only occur once => should be solved
     expected_constraints = @expected_constraints.clone
@@ -107,4 +115,16 @@ class Individual
     
     expected_constraints.length
   end
+end
+
+class Mutation
+  attr_reader :name, :method
+  
+  def initialize(name, method)
+    @name = name
+    @method = method
+  end
+end
+
+class Recombination < Mutation
 end
