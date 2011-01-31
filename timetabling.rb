@@ -14,7 +14,7 @@ def mutate_on_constraints(old_periods)
   
   rooms = old_periods.first.constraints.length
   periods = []
-  NUMBER_OF_PERIODS.times do |i|
+  (constraints.length / rooms).times do |i|
     period_constraints = []
     rooms.times do |j|
       period_constraints << constraints[i * rooms + j]
@@ -29,6 +29,34 @@ end
 # - Beweis, dass nur Austausch der Constraints die clashing hervorrufen genügt
 # - Beweis, dass Austausch von Constraints zwischen clashing_periods und nonclashing_periods genügt
 # - zurücktauschen bei brute force wichtig?
+
+def own_recombination(individual1, individual2)
+  periods = individual1.periods - individual1.colliding_periods
+  rest = []
+  (individual2.periods - individual2.colliding_periods).each do |period|
+    if periods.map{|p| period.constraints.map{|c| p.constraints.include?(c)}.any?}.any?
+      rest << period
+    else
+      periods << period
+    end
+  end
+  rest += individual1.colliding_periods + individual2.colliding_periods
+  
+  periods += mutate_on_constraints(rest) do |constraints|
+    remaining_constraints = []
+    constraints.each do |c|
+      remaining_constraints << c unless periods.map{|p| p.constraints.include?(c)}.any?
+    end
+    rooms = individual1.periods.first.constraints.length
+    new_constraints = remaining_constraints.take(rooms)
+    while not remaining_constraints.empty?
+      remaining_constraints.sort_by{}
+    end
+    new_constraints
+  end
+  
+  individual1.class.new(periods, individual1.constraints)
+end
 
 def ordnungsrekombination(individual1, individual2)
   periods = mutate_on_constraints(individual1.periods) do |individual1_constraints|
@@ -193,7 +221,7 @@ def dual_hillclimber(individuals)
 
     new_individuals = []
     population_size.times do
-      new_individuals << edge_recombination(individuals[rand(individuals.length)], individuals[rand(individuals.length)], 2)
+      new_individuals << own_recombination(individuals[rand(individuals.length)], individuals[rand(individuals.length)])
     end
     new_individuals.each(&:mutate)
     new_individuals += individuals # place old individuals at the end to prefer childs when fitness is same
@@ -276,8 +304,8 @@ File.open("hard-timetabling-data/hdtt#{timetable_data}list.txt", "r") do |file|
   
   time = Time.now
   limit = ARGV[1].to_f || 0
-  100.times do
-    iterations = hillclimber(TripleSwappingWithCollidingConstraint.new(periods, constraints), limit)
+  # 100.times do
+    iterations = hillclimber(OwnIndividual.new(periods, constraints), limit)
     puts "--- iterations: #{iterations}, summed up runtime: #{Time.now - time}"
-  end
+  # end
 end
