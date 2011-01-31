@@ -1,11 +1,10 @@
 class Mutation
+  def to_s
+    self.class.to_s
+  end
 end
 
-class DumbSwapping < Mutation
-  def to_s
-    "DumbSwapping"
-  end
-  
+class DumbSwappingMutation < Mutation
   def call(individual)
     child = individual.copy
     r1 = child.constraints.rand_index
@@ -14,19 +13,6 @@ class DumbSwapping < Mutation
     child.constraints[r1], child.constraints[r2] = child.constraints[r2], child.constraints[r1]
     child.eval_fitness
     child
-  end
-end
-
-class Recombination
-end
-
-class Identity < Recombination
-  def to_s
-    "Identity"
-  end
-  
-  def call(individual1, individual2)
-    [individual1.copy, individual2.copy]
   end
 end
 

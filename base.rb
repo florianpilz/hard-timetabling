@@ -48,7 +48,7 @@ class Individual
   end
   
   def to_s
-    "Individual with mutation #{@mutation.to_s} and recombination #{@recombination.to_s}"
+    "Individual with #{@mutation.to_s} and #{@recombination.to_s}"
   end
   
   def copy

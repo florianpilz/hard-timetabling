@@ -1,5 +1,6 @@
-require 'base' # contains constraint, period, individual and extension of array
+require 'base' # contains constraint, individual and extension of array
 require 'mutations' # contains implementations of all permutating mutations
+require 'recombinations' # contains implementations of all permutating recombinations
 
 NUMBER_OF_PERIODS = 30
 
@@ -295,9 +296,10 @@ File.open("hard-timetabling-data/hdtt#{timetable_data}list.txt", "r") do |file|
   individual = Individual.new(
     :current_constraints => constraints.shuffle,
     :expected_constraints => constraints,
-    :mutation => DumbSwapping.new,
-    :recombination => Identity.new,
-    :slot_size => lines / NUMBER_OF_PERIODS
+    :mutation => DumbSwappingMutation.new,
+    :recombination => IdentityRecombination.new,
+    :slot_size => lines / NUMBER_OF_PERIODS,
+    :debug => true
   )
   # 100.times do
     iterations = hillclimber(individual, limit)
