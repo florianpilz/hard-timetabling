@@ -1,5 +1,3 @@
-NUMBER_OF_SLOTS = 30 # same for all sample data
-
 class Array
   def sum
     inject( nil ) { |sum,x| sum ? sum+x : x }
@@ -36,7 +34,7 @@ class Individual
   attr_accessor :constraints, :collisions, :unfulfilled_constraints
   
   def initialize(values = {})
-    values = {:granularity => 0, :debug => false}.merge(values)
+    values = {:granularity => 0, :debug => false, :number_of_slots => 30}.merge(values)
     @constraints          = values[:current_constraints]
     @expected_constraints = values[:expected_constraints]
     @mutation             = values[:mutation]
@@ -44,6 +42,7 @@ class Individual
     @granularity          = values[:granularity]
     @debug                = values[:debug]
     @slot_size            = values[:slot_size]
+    @number_of_slots      = values[:number_of_slots]
     self.eval_fitness
   end
   
@@ -79,7 +78,7 @@ class Individual
   
   def eval_collisions
     collisions = 0
-    NUMBER_OF_SLOTS.times do |n|
+    @number_of_slots.times do |n|
       old_collisions = collisions
       
       0.upto(@slot_size - 1) do |i|
