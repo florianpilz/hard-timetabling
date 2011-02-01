@@ -17,7 +17,7 @@ describe Array do
   end
 
   it "returns a randomly selected item" do
-    subject.should include(subject.sample)
+    subject.sample.should satisfy {|sample| subject.include?(sample)}
   end
 end
 
