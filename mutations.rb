@@ -4,6 +4,12 @@ class Mutation
   end
 end
 
+class IdentityMutation < Mutation
+  def call(individual)
+    individual.copy
+  end
+end
+
 class DumbSwappingMutation < Mutation
   def call(individual)
     child = individual.copy
@@ -13,12 +19,6 @@ class DumbSwappingMutation < Mutation
     child.constraints[r1], child.constraints[r2] = child.constraints[r2], child.constraints[r1]
     child.eval_fitness
     child
-  end
-end
-
-class IdentityMutation < Mutation
-  def call(individual)
-    individual.copy
   end
 end
 
@@ -41,6 +41,82 @@ class CollidingPeriodsSwapperMutation < Mutation
   end
 end
 
+class InvertingMutation < Mutation
+  def call(individual)
+    child = individual.copy
+    constraints_copy = child.constraints.clone
+    
+    rn1 = child.constraints.rand_index
+    rn2 = child.constraints.rand_index
+    rn1, rn2 = rn2, rn1 if rn1 > rn2
+    
+    rn1.upto(rn2) do |i|
+      child.constraints[rn2 + rn1 - i] = constraints_copy[i]
+    end
+    
+    child.eval_fitness
+    child
+  end
+end
+
+class InvertingWithCollisionMutation < Mutation
+  def call(individual)
+    child = individual.copy
+    constraints_copy = child.constraints.clone
+    periods = child.constraints.to_periods(child.number_of_slots)
+    cp = periods.select{|p| p.collision?}
+    
+    rn1 = child.constraints.rand_index
+    rp = cp.rand_index
+    rc = cp[rp].rand_colliding_constraint_index
+    rn2 = child.constraints.index(cp[rp].constraints[rc])
+    rn1, rn2 = rn2, rn1 if rn1 > rn2
+    
+    rn1.upto(rn2) do |i|
+      child.constraints[rn2 + rn1 - i] = constraints_copy[i]
+    end
+    
+    child.eval_fitness
+    child
+  end
+end
+
+class MixingMutation < Mutation
+  def call(individual)
+    child = individual.copy
+    
+    rn1 = child.constraints.rand_index
+    rn2 = child.constraints.rand_index
+    rn1, rn2 = rn2, rn1 if rn1 > rn2
+
+    start = child.constraints[0..rn1-1] # yields all constraints if range is 0..-1, next line prevents this
+    start = [] if rn1 == 0
+    
+    child.constraints = start + child.constraints[rn1..rn2].shuffle + child.constraints[rn2+1..child.constraints.length-1]
+    child.eval_fitness
+    child
+  end
+end
+
+class ShiftingMutation < Mutation
+  def call(individual)
+    child = individual.copy
+    constraints_copy = child.constraints.clone
+    
+    rn1 = child.constraints.rand_index
+    rn2 = child.constraints.rand_index    
+    rn1, rn2 = rn2, rn1 if rn1 > rn2
+    
+    child.constraints[rn2] = constraints_copy[rn1]
+    rn1.upto(rn2 - 1) do |i|
+      child.constraints[i] = constraints_copy[i + 1]
+    end
+    
+    child.eval_fitness
+    child
+  end
+end
+###########################################
 # local optima, runs fast into local optima
 class SwappingBetweenCollidingPeriods < Individual
   def mutate
@@ -93,138 +169,6 @@ class SwappingBetweenConstraints < Individual
     
     @periods[rand_period_nr1].constraints[rand_constraint_nr1], @colliding_periods[rand_period_nr2].constraints[rand_constraint_nr2] =
       @colliding_periods[rand_period_nr2].constraints[rand_constraint_nr2], @periods[rand_period_nr1].constraints[rand_constraint_nr1]
-    self.update
-  end
-end
-
-# global optima, 700k Iterations
-class InvertingConstraints < Individual
-  def mutate
-    @periods = mutate_on_constraints(@periods) do |constraints|
-      copied_constraints = constraints.map {|c| c.deep_clone}
-      rn1 = rand(constraints.length)
-      rn2 = rand(constraints.length)
-      rn1, rn2 = rn2, rn1 if rn1 > rn2
-
-      rn1.upto(rn2) do |i|
-        constraints[rn2 + rn1 - i] = copied_constraints[i]
-      end
-      constraints      
-    end
-    self.update
-  end
-end
-
-# global optima, 100k iterations
-class InvertingConstraintsWithCollisionAtStartOrEnd < Individual
-  def mutate
-    @periods = mutate_on_constraints(@periods) do |constraints|
-      copied_constraints = constraints.map {|c| c.deep_clone}
-
-      rand_period = rand(@colliding_periods.length)
-      random_period = @colliding_periods[rand_period]
-      colliding_constraints = []
-      random_period.constraints.each do |c1|
-        random_period.constraints.each do |c2|
-          next if c1 == c2
-          if c1.klass == c2.klass or c1.teacher == c2.teacher or c1.room == c2.room
-            colliding_constraints << c1
-            colliding_constraints << c2
-          end
-        end
-      end
-      colliding_constraints = colliding_constraints.uniq
-      rand_constraint = colliding_constraints[rand(colliding_constraints.length)]
-      
-      rn1 = constraints.index(rand_constraint)
-      rn2 = rand(constraints.length)
-      rn1, rn2 = rn2, rn1 if rn1 > rn2
-
-      rn1.upto(rn2) do |i|
-        constraints[rn2 + rn1 - i] = copied_constraints[i]
-      end
-      constraints      
-    end
-    self.update
-  end
-end
-
-# glopbal optima, 300k iterations
-class InvertingConstraintsContainingCollision < Individual
-  def mutate
-    @periods = mutate_on_constraints(@periods) do |constraints|
-      copied_constraints = constraints.map {|c| c.deep_clone}
-
-      rand_period = rand(@colliding_periods.length)
-      random_period = @colliding_periods[rand_period]
-      colliding_constraints = []
-      random_period.constraints.each do |c1|
-        random_period.constraints.each do |c2|
-          next if c1 == c2
-          if c1.klass == c2.klass or c1.teacher == c2.teacher or c1.room == c2.room
-            colliding_constraints << c1
-            colliding_constraints << c2
-          end
-        end
-      end
-      colliding_constraints = colliding_constraints.uniq
-      rand_constraint = colliding_constraints[rand(colliding_constraints.length)]
-      
-      middle = constraints.index(rand_constraint)
-      length = rand(constraints.length) + 1
-      if (middle - length / 2 < 0)
-        index_start = 0
-        index_end = length - 1
-      elsif (middle + length / 2 + length % 2 - 1 > constraints.length - 1)
-        index_start = constraints.length - length
-        index_end = constraints.length - 1
-      else
-        index_start = middle - length / 2
-        index_end = middle + length / 2 + length % 2 - 1
-      end
-      
-      index_start.upto(index_end) do |i|
-        constraints[index_start + index_end - i] = copied_constraints[i]
-      end
-      constraints      
-    end
-    self.update
-  end
-end
-
-# theoretically global optima possible, practically local optima (too slow, 4kk iterations till 30 collisions)
-# no domaoin specific knowledge usable, i.e. collisions
-class MixingConstraints < Individual
-  def mutate
-    @periods = mutate_on_constraints(@periods) do |constraints|
-      rn1 = rand(constraints.length)
-      rn2 = rand(constraints.length)
-      rn1, rn2 = rn2, rn1 if rn1 > rn2
-
-      start = constraints[0..rn1-1] # yields all constraints if range is 0..-1, next line prevents this
-      start = [] if rn1 == 0
-      
-      start + constraints[rn1..rn2].shuffle + constraints[rn2+1..constraints.length-1]
-    end
-    self.update
-  end
-end
-
-# local optima, 4.4kk iterations
-class ShiftingConstraints < Individual
-  def mutate
-    @periods = mutate_on_constraints(@periods) do |constraints|
-      copied_constraints = constraints.map {|c| c.deep_clone}
-      rn1 = rand(constraints.length)
-      rn2 = rand(constraints.length)
-      rn1, rn2 = rn2, rn1 if rn1 > rn2
-      
-      constraints[rn2] = copied_constraints[rn1]
-      rn1.upto(rn2 - 1) do |i|
-        constraints[i] = copied_constraints[i + 1]
-      end
-      constraints      
-    end
     self.update
   end
 end

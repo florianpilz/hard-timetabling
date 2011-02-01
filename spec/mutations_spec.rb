@@ -23,7 +23,8 @@ def individual_generator(mutation)
     :expected_constraints => constraints,
     :mutation => mutation,
     :recombination => IdentityRecombination.new,
-    :number_of_slots => SLOTS
+    :number_of_slots => SLOTS,
+    :debug => true
   )
 end
 
@@ -49,23 +50,23 @@ describe "Mutations" do
     end
   end
   
-  describe DumbSwappingMutation do
-    subject{ individual_generator(DumbSwappingMutation.new) }
-    it "generates a child with a better fitness" do
-      child = subject.mutate
-      child.class == Individual
-      child.should_not == subject
-      child.fitness.should < subject.fitness
+  describe "fitness-changing mutations" do
+    subject{ [DumbSwappingMutation, CollidingPeriodsSwapperMutation, InvertingMutation, InvertingWithCollisionMutation, MixingMutation] }
+    it "generates a child with the same constraint-permutation" do
+      subject.each do |klass|
+        individual = individual_generator(klass.new)
+        child = individual.mutate
+        child.class == Individual
+        child.should_not == individual
+        child.unfulfilled_constraints.should == 0 # check for permutation
+        child.fitness.should < individual.fitness # FIXME
+      end
     end
-  end
-  
-  describe CollidingPeriodsSwapperMutation do
-    subject{ individual_generator(CollidingPeriodsSwapperMutation.new) }
-    it "generates a child with a better fitness" do
-      child = subject.mutate
-      child.class == Individual
-      child.should_not == subject
-      child.fitness.should < subject.fitness
+    
+    it "returns its class as name" do
+      subject.each do |klass|
+        klass.new.to_s.should == klass.to_s
+      end
     end
   end
 end
