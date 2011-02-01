@@ -26,7 +26,7 @@ class Period
         end
       end
     end
-    @constraints.index(colliding_constraints.uniq.sample)
+    @constraints.index(colliding_constraints.uniq.sample) or raise(ScriptError, "no colliding constraints present")
   end
   
   def rand_constraint_index
