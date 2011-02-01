@@ -24,7 +24,20 @@ end
 
 class CollidingPeriodsSwapperMutation < Mutation
   def call(individual)
-    raise NotImplementedError
+    child = individual.copy
+    periods = child.constraints.to_periods
+    
+    cp = periods.select {|p| p.collision?}
+    rp1 = cp.rand_index
+    rp2 = cp.rand_index
+    rc1 = cp[rp1].rand_colliding_constraint_index
+    rc2 = cp[rp2].rand_colliding_constraint_index
+    
+    cp[rp1].constraints[rc1], cp[rp2].constraints[rc2] = cp[rp2].constraints[rc2], cp[rp1].constraints[rc1]
+    
+    child.constraints = periods.to_constraints
+    child.eval_fitness
+    child
   end
 end
 
