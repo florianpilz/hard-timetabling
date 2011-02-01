@@ -15,7 +15,7 @@ class Array
     self[rand_index]
   end
   
-  def to_periods(slots = 30)
+  def to_periods(slots)
     slot_size = self.length / slots
     periods = []
     
@@ -91,10 +91,10 @@ class Period
 end
 
 class Individual
-  attr_accessor :constraints, :collisions, :unfulfilled_constraints
+  attr_accessor :constraints, :collisions, :unfulfilled_constraints, :number_of_slots
   
   def initialize(values = {})
-    values = {:granularity => 0, :debug => false, :number_of_slots => 30}.merge(values)
+    values = {:granularity => 0, :debug => false}.merge(values)
     @constraints          = values[:current_constraints]
     @expected_constraints = values[:expected_constraints]
     @mutation             = values[:mutation]

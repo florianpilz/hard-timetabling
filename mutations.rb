@@ -25,7 +25,7 @@ end
 class CollidingPeriodsSwapperMutation < Mutation
   def call(individual)
     child = individual.copy
-    periods = child.constraints.to_periods
+    periods = child.constraints.to_periods(child.number_of_slots)
     
     cp = periods.select {|p| p.collision?}
     rp1 = cp.rand_index
