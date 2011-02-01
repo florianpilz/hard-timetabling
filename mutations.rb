@@ -16,18 +16,9 @@ class DumbSwappingMutation < Mutation
   end
 end
 
-# global optima
-# hdtt4: 128k iterations, ca. 10min
-class DumbSwappingBetweenPeriods < Individual
-  def mutate
-    rand_period_nr1 = rand(@periods.length)
-    rand_constraint_nr1 = rand(@periods.first.constraints.length)
-    rand_period_nr2 = rand(@periods.length)
-    rand_constraint_nr2 = rand(@periods.first.constraints.length)
-    
-    @periods[rand_period_nr1].constraints[rand_constraint_nr1], @periods[rand_period_nr2].constraints[rand_constraint_nr2] =
-      @periods[rand_period_nr2].constraints[rand_constraint_nr2], @periods[rand_period_nr1].constraints[rand_constraint_nr1]
-    self.update
+class IdentityMutation
+  def call(individual)
+    individual.copy
   end
 end
 
