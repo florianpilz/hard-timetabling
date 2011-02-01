@@ -26,7 +26,7 @@ class Period
         end
       end
     end
-    colliding_constraints.uniq.rand_index
+    @constraints.index(colliding_constraints.uniq.sample)
   end
   
   def rand_constraint_index
