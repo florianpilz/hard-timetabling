@@ -19,6 +19,28 @@ describe Array do
   it "returns a randomly selected item" do
     subject.sample.should satisfy {|sample| subject.include?(sample)}
   end
+  
+  it "transforms an array of constraints into an array of periods" do
+    constraints = []
+    4.times {constraints << Constraint.new(:klass => 1, :teacher => 1, :room => 1)}
+    expected_periods = [Period.new([constraints[0], constraints[1]]), Period.new([constraints[2], constraints[3]])]
+    
+    actual_periods = constraints.to_periods(2)
+    actual_periods.length.should == expected_periods.length
+    actual_periods.length.times do |i|
+      actual_periods[i].constraints.should == expected_periods[i].constraints
+    end
+  end
+  
+  it "transforms an array of periods into an array of constraints" do
+    constraints = []
+    4.times {constraints << Constraint.new(:klass => 1, :teacher => 1, :room => 1)}
+    periods = [Period.new([constraints[0], constraints[1]]), Period.new([constraints[2], constraints[3]])]
+    expected_constraints = constraints
+    
+    actual_constraints = periods.to_constraints
+    actual_constraints.should == expected_constraints
+  end
 end
 
 describe Constraint do
@@ -37,6 +59,45 @@ describe Constraint do
   end
 end
 
+describe Period do
+  before(:all) do
+    @attributes = {:klass => 1, :teacher => 1, :room => 1}
+    @different_attributes = {:klass => 2, :teacher => 2, :room => 2}
+  end
+  
+  it "raises an error if no collision is present, but asked for an colliding constraint" do
+    p = Period.new([Constraint.new(@attributes), Constraint.new(@different_attributes)])
+    expect{p.rand_colliding_constraint_index}.to raise_error(ScriptError)
+  end
+  
+  it "has collision if two constraints collide" do
+    p = Period.new([Constraint.new(@attributes), Constraint.new(@attributes)])
+    p.collision?.should be_true
+    
+    p = Period.new([Constraint.new(@attributes), Constraint.new(@different_attributes)])
+    p.collision?.should be_false
+  end
+  
+  it "may yield the index of a randomly chosen constraint" do
+    p = Period.new([Constraint.new(@attributes), Constraint.new(@attributes)])
+    p.rand_constraint_index.should satisfy {|i| i >= 0 && i < p.constraints.length}
+  end
+  
+  it "may yield the index of a randomly chosen colliding constraint" do
+    constraints = []
+    all_zero = {:klass => 0, :teacher => 0, :room => 0}
+    c1, c2 = Constraint.new(all_zero), Constraint.new(all_zero)
+    
+    constraints << c1
+    100.times {|i| constraints << Constraint.new(:klass => i + 1, :teacher => i + 1, :room => i + 1)}
+    constraints << c2
+
+    period = Period.new(constraints)
+    index = period.rand_colliding_constraint_index
+    period.constraints[index].should satisfy {|c| c == c1 || c == c2}
+  end
+end
+
 describe Individual do
   before(:all) do
     @constraints = [Constraint.new(:klass => 1, :teacher => 2, :room => 3), Constraint.new(:klass => 1, :teacher => 2, :room => 3)]
@@ -47,7 +108,6 @@ describe Individual do
     :expected_constraints => [@expected_constraint],
     :mutation => IdentityMutation.new,
     :recombination => IdentityRecombination.new,
-    :slot_size => 2,
     :number_of_slots => 1,
     :debug => true)
   }
@@ -57,7 +117,6 @@ describe Individual do
     individual = Individual.new(
     :current_constraints => [Constraint.new(similar_values)],
     :expected_constraints => [Constraint.new(similar_values)],
-    :slot_size => 1,
     :number_of_slots => 1,
     :debug => true
     )

@@ -14,6 +14,30 @@ class Array
   def sample
     self[rand_index]
   end
+  
+  def to_periods(slots = 30)
+    slot_size = self.length / slots
+    periods = []
+    
+    slots.times do |slot|
+      period_constraints = []
+      
+      slot_size.times do |i|
+        period_constraints << self[slot * slot_size + i]
+      end
+      periods << Period.new(period_constraints)
+    end
+    
+    periods
+  end
+  
+  def to_constraints
+    constraints = []
+    self.each do |period|
+      constraints += period.constraints
+    end
+    constraints
+  end
 end
 
 class Constraint
@@ -30,6 +54,42 @@ class Constraint
   end
 end
 
+class Period
+  attr_accessor :constraints
+  
+  def initialize(constraints)
+    @constraints = constraints
+  end
+  
+  def collision?
+    @constraints.each do |c1|
+      @constraints.each do |c2|
+        next if c1 == c2
+        return true if c1.klass == c2.klass || c1.teacher == c2.teacher || c1.room == c2.room
+      end
+    end
+    false
+  end
+  
+  def rand_colliding_constraint_index
+    colliding_constraints = []
+    @constraints.each do |c1|
+      @constraints.each do |c2|
+        next if c1 == c2
+        if c1.klass == c2.klass || c1.teacher == c2.teacher || c1.room == c2.room
+          colliding_constraints << c1
+          colliding_constraints << c2
+        end
+      end
+    end
+    @constraints.index(colliding_constraints.uniq.sample) or raise(ScriptError, "no colliding constraints present")
+  end
+  
+  def rand_constraint_index
+    @constraints.rand_index
+  end
+end
+
 class Individual
   attr_accessor :constraints, :collisions, :unfulfilled_constraints
   
@@ -41,8 +101,8 @@ class Individual
     @recombination        = values[:recombination]
     @granularity          = values[:granularity]
     @debug                = values[:debug]
-    @slot_size            = values[:slot_size]
     @number_of_slots      = values[:number_of_slots]
+    @slot_size            = @constraints.length / @number_of_slots
     self.eval_fitness
   end
   
