@@ -1,3 +1,39 @@
+class Period
+  attr_accessor :constraints
+  
+  def initialize(constraints)
+    @constraints = constraints
+  end
+  
+  def collision?
+    @constraints.each do |c1|
+      @constraints.each do |c2|
+        next if c1 == c2
+        return true if c1.klass == c2.klass || c1.teacher == c2.teacher || c1.room == c2.room
+      end
+    end
+    false
+  end
+  
+  def rand_colliding_constraint_index
+    colliding_constraints = []
+    @constraints.each do |c1|
+      @constraints.each do |c2|
+        next if c1 == c2
+        if c1.klass == c2.klass || c1.teacher == c2.teacher || c1.room == c2.room
+          colliding_constraints << c1
+          colliding_constraints << c2
+        end
+      end
+    end
+    colliding_constraints.uniq.rand_index
+  end
+  
+  def rand_constraint_index
+    @constraints.rand_index
+  end
+end
+
 class Mutation
   def to_s
     self.class.to_s
