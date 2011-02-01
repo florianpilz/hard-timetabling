@@ -6,7 +6,7 @@ class Array
   end
   
   def mean
-    sum / size
+    sum / size.to_f
   end
   
   def rand_index
