@@ -54,6 +54,20 @@ describe "base" do
         :debug => true)
     }
     
+    it "has 1 unfulfilled constraint unless only attributes are compared" do
+      similar_values = {:klass => 1, :teacher => 1, :room => 1}
+      individual = Individual.new(
+        :current_constraints => [Constraint.new(similar_values)],
+        :expected_constraints => [Constraint.new(similar_values)],
+        :slot_size => 1,
+        :number_of_slots => 1,
+        :debug => true
+      )
+      
+      # proves that eval_unfulfilled_constraints now uses == between objects, rather their attributes
+      individual.unfulfilled_constraints.should == 1
+    end
+    
     it "has 1 unfulfilled constraint" do
       subject.unfulfilled_constraints.should == 1
     end

@@ -107,7 +107,6 @@ class Individual
   def eval_unfulfilled_constraints
     return 0 unless @debug # assume all constraints are fulfilled unless in debug mode
     
-    # FIXME yields 0 if two identical constraints only occur once => should be solved
     expected_constraints = @expected_constraints.clone
     delete_constraints = []
     
