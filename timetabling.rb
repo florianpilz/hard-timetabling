@@ -9,6 +9,12 @@ require 'recombinations'
 # - zurücktauschen bei brute force wichtig?
 
 module Main
+  @print_info = false
+  
+  def self.print_info=(bool)
+    @print_info = bool
+  end
+  
   def self.run(values)
     individuals = []
     values[:population_size].times do
@@ -39,7 +45,8 @@ module Main
       end
       
       sorted_individuals = (new_individuals + individuals).sort_by(&:fitness).take(values[:population_size])
-      if sorted_individuals.first.fitness < individuals.first.fitness
+      if sorted_individuals.first.fitness < individuals.first.fitness || @print_info
+        @print_info = false
         Main::print_status(iterations, sorted_individuals, time)
       end
       individuals = sorted_individuals
@@ -76,5 +83,9 @@ module Main
   end
 end
 
+Signal.trap("TSTP") do |x| # Control-Z
+  Main::print_info = true
+end
+
 constraints = Main::read_timetable_data(4)
-Main::run(:constraints => constraints, :mutation => TripleSwapperWithTwoCollidingConstraintsMutation.new, :recombination => MinCollisionsEdgeRecombination.new, :number_of_slots => 30, :population_size => 2, :childs => 1, :recombination_chance => 0.1, :mutation_chance => 1.0, :limit => 0)
+Main::run(:constraints => constraints, :mutation => TripleSwapperWithTwoCollidingConstraintsMutation.new, :recombination => MinCollisionsEdgeRecombination.new, :number_of_slots => 30, :population_size => 1, :childs => 1, :recombination_chance => 0.1, :mutation_chance => 1.0, :limit => 0)
