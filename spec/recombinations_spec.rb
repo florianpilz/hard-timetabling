@@ -1,14 +1,6 @@
 require 'spec_helper'
 
 describe "Recombinations" do
-  before(:all) do
-    @all_recombinations_enhanced_fitness = []
-  end
-
-  after(:all) do
-    puts "\nAll Recombinations enhanced fitness!" if @all_recombinations_enhanced_fitness.all?
-  end
-  
   describe IdentityRecombination do
     subject { individual_generator(:recombination => IdentityRecombination.new) }
     
@@ -39,7 +31,7 @@ describe "Recombinations" do
           child.should_not == individual2
           child.unfulfilled_constraints.should == 0
           child.constraints.length.should == individual1.constraints.length
-          @all_recombinations_enhanced_fitness << (child.fitness < individual1.fitness && child.fitness < individual2.fitness)
+          @@all_recombinations_enhanced_fitness << (child.fitness < individual1.fitness && child.fitness < individual2.fitness)
         end
       end
     end

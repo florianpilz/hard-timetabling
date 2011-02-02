@@ -2,6 +2,19 @@ require 'base'
 require 'mutations'
 require 'recombinations'
 
+RSpec.configure do |config|
+  config.before(:suite) do
+    @@all_mutations_enhanced_fitness = []
+    @@all_recombinations_enhanced_fitness = []
+  end
+  
+  config.after(:suite) do
+    puts ""
+    puts "All Mutations enhanced fitness!" if @@all_mutations_enhanced_fitness.all?
+    puts "All Recombinations enhanced fitness!" if @@all_recombinations_enhanced_fitness.all?
+  end
+end
+
 class Fixnum
   def fak_sum # Summenformel nutzen, also x * (x - 1) / 2
     self <= 0 ? 0 : self + (self - 1).fak_sum

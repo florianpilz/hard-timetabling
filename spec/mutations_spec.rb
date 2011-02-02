@@ -1,14 +1,6 @@
 require 'spec_helper'
 
 describe "Mutations" do
-  before(:all) do
-    @all_mutations_enhanced_fitness = []
-  end
-
-  after(:all) do
-    puts "\nAll Mutations enhanced fitness!" if @all_mutations_enhanced_fitness.all?
-  end
-  
   describe IdentityMutation do
     subject{ individual_generator(:mutation => IdentityMutation.new) }    
     it "generates a child with the same constraint-permutation" do
@@ -34,7 +26,7 @@ describe "Mutations" do
         child.unfulfilled_constraints.should == 0
         child.constraints.length.should == individual.constraints.length
         child.fitness.should <= individual.fitness
-        @all_mutations_enhanced_fitness << (child.fitness < individual.fitness)
+        @@all_mutations_enhanced_fitness << (child.fitness < individual.fitness)
       end
     end
     
