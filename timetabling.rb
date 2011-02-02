@@ -87,5 +87,5 @@ Signal.trap("TSTP") do |x| # Control-Z
   Main::print_info = true
 end
 
-constraints = Main::read_timetable_data(4)
-Main::run(:constraints => constraints, :mutation => TripleSwapperWithTwoCollidingConstraintsMutation.new, :recombination => MinCollisionsEdgeRecombination.new, :number_of_slots => 30, :population_size => 1, :childs => 1, :recombination_chance => 0.1, :mutation_chance => 1.0, :limit => 0)
+constraints = Main::read_timetable_data(ARGV[0] || 4)
+Main::run(:constraints => constraints, :mutation => TripleSwapperWithTwoCollidingConstraintsMutation.new, :recombination => MinCollisionsEdgeRecombination.new, :number_of_slots => 30, :population_size => 1, :childs => 1, :recombination_chance => 0.0, :mutation_chance => 1.0, :limit => ARGV[1] || 0)
