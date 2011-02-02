@@ -27,11 +27,9 @@ describe "Recombinations" do
   end
   
   describe "fitness-changing recombinations" do
-    # subject { [OrderingRecombination, MappingRecombination, MinEdgesEdgeRecombination, MinCollisionsWithLastConstraintEdgeRecombination, MinCollisionsEdgeRecombination] }
-    subject {[OrderingRecombination, MinEdgesEdgeRecombination, MinCollisionsWithLastConstraintEdgeRecombination, MinCollisionsEdgeRecombination]}
+    subject {[OrderingRecombination, MappingRecombination, MinEdgesEdgeRecombination, MinCollisionsWithLastConstraintEdgeRecombination, MinCollisionsEdgeRecombination]}
     it "generates valid childs with constraint-permutations" do
       subject.each do |klass|
-        puts klass.to_s
         individual1 = individual_generator(:recombination => klass.new)
         individual2 = individual1.copy
         individual2.constraints.shuffle!

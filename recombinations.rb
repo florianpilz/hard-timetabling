@@ -46,7 +46,7 @@ class MappingRecombination < Recombination
       constraints[i] = individual1.constraints[i]
     end
     
-    0.upto(rn_start) do |i|
+    0.upto(rn_start - 1) do |i|
       c = individual2.constraints[i]
       c = individual1.constraints[individual2.constraints.index(c)] while constraints.include?(c)
       constraints[i] = c
