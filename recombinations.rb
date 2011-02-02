@@ -65,8 +65,11 @@ class MappingRecombination < Recombination
   end
 end
 
-class EdgeRecombination < Recombination
-  def recombinate(individual1, individual2)
+class EdgeRecombinationTemplate < Recombination
+  
+  private
+  
+  def recombinate_template(individual1, individual2)
     constraints = []
     used_constraints = []
     length = individual1.constraints.length
@@ -87,10 +90,10 @@ class EdgeRecombination < Recombination
     constraints << individual1.constraints.first
     used_constraints << individual1.constraints.first
     1.upto(length - 1) do |i|
-      sorted_possibilities = (edges[constraints.last] - used_constraints).sort_by{|c| (edges[c] - used_constraints).length}
+      sorted_possibilities = (edges[constraints.last] - used_constraints).sort_by{|c| yield c, edges, used_constraints, constraints}
       k = []
       sorted_possibilities.each do |c|
-        break if (edges[c] - used_constraints).length > (edges[sorted_possibilities.first] - used_constraints).length
+        break if (yield c, edges, used_constraints, constraints) > (yield sorted_possibilities.first, edges, used_constraints, constraints)
         k << c
       end
       
@@ -110,137 +113,42 @@ class EdgeRecombination < Recombination
     child.eval_fitness
     child
   end
-end
-
-########################################################################
-def edge_recombination(individual1, individual2, variation = 0)
-  periods = mutate_on_constraints(individual1.periods) do |individual1_constraints|
-    l = individual1_constraints.length
-    constraints = []
-    used_nodes = []
-    edges = {}
-    
-    individual1_constraints.each do |c|
-      edges[c.hash.to_s.to_sym] = []
-    end
-    
-    individual1_constraints.each_with_index do |c, i|
-      c1 = individual1_constraints[(i + 1) % l]
-      c2 = individual1_constraints[(i - 1) % l]
-      edges[c.hash.to_s.to_sym] << c1 << c2
-    end
-    
-    mutate_on_constraints(individual2.periods) do |individual2_constraints|
-      
-      individual2_constraints.each_with_index do |c, i|
-        c1 = individual2_constraints[(i + 1) % l]
-        c2 = individual2_constraints[(i - 1) % l]
-        edges[c.hash.to_s.to_sym] << c1 << c2
-      end
-            
-      if rand(2) > 0
-        constraints[0] = individual1_constraints.first
-        used_nodes << individual1_constraints.first
-      else
-        constraints[0] = individual2_constraints.first
-        used_nodes << individual2_constraints.first
-      end
-      
-      individual2_constraints
-    end
-    
-    1.upto(l - 1) do |i|
-      possibilities = edges[constraints.last.hash.to_s.to_sym] - used_nodes
-      if variation == 0
-        possibilities = possibilities.sort_by { |c| (edges[c.hash.to_s.to_sym] - used_nodes).length }
-      elsif variation == 1 # variation which orderes by least collisions with neighbours
-        possibilities = possibilities.sort_by { |c| calc_collisions(constraints.last, c) }
-      else # another variant with least collisions between last #rooms nodes
-        rooms = individual1.periods.first.constraints.length
-        last_index = constraints.index(constraints.last)
-        latest_constraints = []
-        (last_index - rooms + 1).upto(last_index) do |i|
-          next if i < 0
-          latest_constraints << constraints[i]
-        end
-        
-        possibilities = possibilities.sort_by do |c1|
-          collisions = 0
-          collisions += latest_constraints.map { |c2| calc_collisions(c1, c2) }.sum
-          collisions
-        end
-      end
-      
-      k = []
-      unless possibilities.empty?
-        i = 0
-        if variation == 0 #######################
-          while i < possibilities.length and (edges[possibilities[0].hash.to_s.to_sym] - used_nodes).length == (edges[possibilities[i].hash.to_s.to_sym] - used_nodes).length
-            k << possibilities[i]
-            i += 1
-          end
-        elsif variation == 1        
-          while i < possibilities.length and calc_collisions(constraints.last, possibilities[0]) == calc_collisions(constraints.last, possibilities[i])
-            k << possibilities[i]
-            i += 1
-          end
-        else
-          while i < possibilities.length and latest_constraints.map{|c| calc_collisions(c, possibilities[0])}.sum == latest_constraints.map{|c| calc_collisions(c, possibilities[i])}.sum
-            k << possibilities[i]
-            i += 1
-          end
-        end #########################################
-      end
-      
-      if k.empty?
-        temp_constraints = individual1_constraints - used_nodes
-        node = temp_constraints[rand(temp_constraints.length)]
-        constraints << node
-        used_nodes << node
-      else
-        node = k[rand(k.length)]
-        constraints << node
-        used_nodes << node
-      end
-    end
-    
-    constraints
-  end
-  individual1.class.new(periods, individual1.constraints)
-end
-
-def calc_collisions(c1, c2) # TODO remove
-  collisions = 0
-  collisions += 1 if c1.klass == c2.klass
-  collisions += 1 if c1.teacher == c2.teacher
-  collisions += 1 if c1.room == c2.room
-  collisions
-end
-
-def own_recombination(individual1, individual2)
-  periods = individual1.periods - individual1.colliding_periods
-  rest = []
-  (individual2.periods - individual2.colliding_periods).each do |period|
-    if periods.map{|p| period.constraints.map{|c| p.constraints.include?(c)}.any?}.any?
-      rest << period
-    else
-      periods << period
-    end
-  end
-  rest += individual1.colliding_periods + individual2.colliding_periods
   
-  periods += mutate_on_constraints(rest) do |constraints|
-    remaining_constraints = []
-    constraints.each do |c|
-      remaining_constraints << c unless periods.map{|p| p.constraints.include?(c)}.any?
-    end
-    rooms = individual1.periods.first.constraints.length
-    new_constraints = remaining_constraints.take(rooms)
-    while not remaining_constraints.empty?
-      remaining_constraints.sort_by{}
-    end
-    new_constraints
+  def calc_collisions(c1, c2) # helper for collision oriented EdgeRecombinations
+    collisions = 0
+    collisions += 1 if c1.klass == c2.klass
+    collisions += 1 if c1.teacher == c2.teacher
+    collisions += 1 if c1.room == c2.room
+    collisions
   end
-  
-  individual1.class.new(periods, individual1.constraints)
+end
+
+class MinEdgesEdgeRecombination < EdgeRecombinationTemplate
+  def recombinate(individual1, individual2)
+    recombinate_template(individual1, individual2) do |constraint, edges, used_constraints, _|
+      (edges[constraint] - used_constraints).length
+    end
+  end
+end
+
+class MinCollisionsWithLastConstraintEdgeRecombination < EdgeRecombinationTemplate
+  def recombinate(individual1, individual2)
+    recombinate_template(individual1, individual2) do |constraint, _, _, current_constraints|
+      calc_collisions(current_constraints.last, constraint)
+    end
+  end
+end
+
+class MinCollisionsEdgeRecombination < EdgeRecombinationTemplate
+  def recombinate(individual1, individual2)
+    slot_size = individual1.constraints.length / individual1.number_of_slots
+    recombinate_template(individual1, individual2) do |constraint, _, _, current_constraints|
+      end_index = current_constraints.length - 1
+      start_index = end_index - slot_size + 1
+      start_index = 0 if start_index < 0
+      
+      last_slot_size_constraints = current_constraints[start_index..end_index]
+      last_slot_size_constraints.map{|c| calc_collisions(c, constraint)}.sum
+    end
+  end
 end
