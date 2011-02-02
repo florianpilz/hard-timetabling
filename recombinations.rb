@@ -13,12 +13,25 @@ end
 class OrderingRecombination < Recombination
   def call(individual1, individual2)
     child1 = recombinate(individual1, individual2)
-    child1 = recombinate(individual2, individual1)
+    child2 = recombinate(individual2, individual1)
     [child1, child2]
   end
   
   def recombinate(individual1, individual2)
+    constraints = []
+    rand_length = rand(individual1.constraints.length + 1)
+    rand_length.times do |i|
+      constraints << individual1.constraints[i]
+    end
     
+    individual2.constraints.each do |constraint|
+      constraints << constraint unless constraints.include?(constraint)
+    end
+    
+    child = individual1.copy
+    child.constraints = constraints
+    child.eval_fitness
+    child
   end
 end
 
@@ -196,7 +209,7 @@ def edge_recombination(individual1, individual2, variation = 0)
   individual1.class.new(periods, individual1.constraints)
 end
 
-def calc_collisions(c1, c2)
+def calc_collisions(c1, c2) # TODO remove
   collisions = 0
   collisions += 1 if c1.klass == c2.klass
   collisions += 1 if c1.teacher == c2.teacher
