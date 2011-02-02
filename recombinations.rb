@@ -2,22 +2,16 @@ class Recombination
   def to_s
     self.class.to_s
   end
-  
-  def call(individual1, individual2)
-    child1 = recombinate(individual1, individual2)
-    child2 = recombinate(individual2, individual1)
-    [child1, child2]
-  end
 end
 
 class IdentityRecombination < Recombination
   def call(individual1, individual2)
-    [individual1.copy, individual2.copy]
+    individual1.copy
   end
 end
 
 class OrderingRecombination < Recombination
-  def recombinate(individual1, individual2)
+  def call(individual1, individual2)
     constraints = []
     rand_length = rand(individual1.constraints.length + 1)
     rand_length.times do |i|
@@ -36,7 +30,7 @@ class OrderingRecombination < Recombination
 end
 
 class MappingRecombination < Recombination
-  def recombinate(individual1, individual2)
+  def call(individual1, individual2)
     constraints = []
     rn_start = individual1.constraints.rand_index
     rn_end = individual1.constraints.rand_index
@@ -69,7 +63,7 @@ class EdgeRecombinationTemplate < Recombination
   
   private
   
-  def recombinate_template(individual1, individual2)
+  def call_template(individual1, individual2)
     constraints = []
     used_constraints = []
     length = individual1.constraints.length
@@ -124,25 +118,25 @@ class EdgeRecombinationTemplate < Recombination
 end
 
 class MinEdgesEdgeRecombination < EdgeRecombinationTemplate
-  def recombinate(individual1, individual2)
-    recombinate_template(individual1, individual2) do |constraint, edges, used_constraints, _|
+  def call(individual1, individual2)
+    call_template(individual1, individual2) do |constraint, edges, used_constraints, _|
       (edges[constraint] - used_constraints).length
     end
   end
 end
 
 class MinCollisionsWithLastConstraintEdgeRecombination < EdgeRecombinationTemplate
-  def recombinate(individual1, individual2)
-    recombinate_template(individual1, individual2) do |constraint, _, _, current_constraints|
+  def call(individual1, individual2)
+    call_template(individual1, individual2) do |constraint, _, _, current_constraints|
       calc_collisions(current_constraints.last, constraint)
     end
   end
 end
 
 class MinCollisionsEdgeRecombination < EdgeRecombinationTemplate
-  def recombinate(individual1, individual2)
+  def call(individual1, individual2)
     slot_size = individual1.constraints.length / individual1.number_of_slots
-    recombinate_template(individual1, individual2) do |constraint, _, _, current_constraints|
+    call_template(individual1, individual2) do |constraint, _, _, current_constraints|
       end_index = current_constraints.length - 1
       start_index = end_index - slot_size + 1
       start_index = 0 if start_index < 0

@@ -121,11 +121,11 @@ class Individual
     individual
   end
   
-  def mutate # must return individual
+  def mutate # must return 1 new individual
     @mutation.call(self)
   end
   
-  def recombinate_with(individual) # must return two individuals
+  def recombinate_with(individual) # must return 1 new individual
     @recombination.call(self, individual)
   end
   

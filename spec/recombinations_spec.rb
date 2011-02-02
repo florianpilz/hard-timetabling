@@ -13,12 +13,10 @@ describe "Recombinations" do
     subject { individual_generator(:recombination => IdentityRecombination.new) }
     
     it "generates two childs with the same constraint-permutation" do
-      child1, child2 = subject.recombinate_with(subject)
-      [child1, child2].each do |child|
-        child.should_not == subject
-        child.class.should == Individual
-        child.constraints.should == subject.constraints
-      end
+      child = subject.recombinate_with(subject)
+      child.should_not == subject
+      child.class.should == Individual
+      child.constraints.should == subject.constraints
     end
     
     it "returns its class as name" do
@@ -34,7 +32,7 @@ describe "Recombinations" do
         individual2 = individual1.copy
         individual2.constraints.shuffle!
 
-        child1, child2 = individual1.recombinate_with(individual2)
+        child1, child2 = individual1.recombinate_with(individual2), individual2.recombinate_with(individual1)
         [child1, child2].each do |child|
           child.class.should == Individual
           child.should_not == individual1

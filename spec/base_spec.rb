@@ -164,11 +164,9 @@ describe Individual do # TODO add tests for different granularity
     child.should_not == subject
   end
 
-  it "can create two childs via recombination" do
-    child1, child2 = subject.recombinate_with(subject)
-    [child1, child2].each do |child|
-      child.class.should == Individual
-      child.should_not == subject
-    end
+  it "can create child via recombination" do
+    child = subject.recombinate_with(subject)
+    child.class.should == Individual
+    child.should_not == subject
   end
 end
