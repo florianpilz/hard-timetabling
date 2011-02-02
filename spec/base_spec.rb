@@ -98,7 +98,7 @@ describe Period do
   end
 end
 
-describe Individual do
+describe Individual do # TODO add tests for different granularity
   before(:all) do
     @constraints = [Constraint.new(:klass => 1, :teacher => 2, :room => 3), Constraint.new(:klass => 1, :teacher => 2, :room => 3)]
     @expected_constraint = Constraint.new(:klass => 3, :teacher => 2, :room => 1)

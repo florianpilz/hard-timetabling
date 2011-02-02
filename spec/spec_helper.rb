@@ -3,8 +3,8 @@ require 'mutations'
 require 'recombinations'
 
 class Fixnum
-  def fak_sum
-    self == 0 ? 0 : self + (self - 1).fak_sum
+  def fak_sum # Summenformel nutzen, also x * (x - 1) / 2
+    self <= 0 ? 0 : self + (self - 1).fak_sum
   end
 end
 
