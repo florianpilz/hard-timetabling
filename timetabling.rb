@@ -17,24 +17,52 @@ module Main
                       :expected_constraints => values[:constraints]}))
     end
     
+    time = Time.now
     iterations = 0
-    puts "Start with population size of #{values[:population_size]} -- Mutation: #{values[:mutation]}, Recombination: #{values[:recombination]}"
+    individuals = individuals.sort_by(&:fitness)
+    puts "=== Start with population size of #{values[:population_size]}\n=== Mutation: #{values[:mutation]}\n=== Recombination: #{values[:recombination]}\n"
     
-    while individuals.sort_by(&:fitness).first.fitness > 0
+    while individuals.first.fitness > 0 && (values[:limit] == 0 || values[:limit] > Time.now - time)
       iterations += 1
       
       new_individuals = []
-      values[:population_size].times do
-        new_individuals += individuals.sample.recombinate_with(individuals.sample)
+      values[:childs].times do
+        if rand <= values[:recombination_chance]
+          child = individuals.sample.recombinate_with(individuals.sample)
+          if rand <= values[:mutation_chance]
+            child = child.mutate
+          end
+          new_individuals << child
+        else
+          new_individuals << individuals.sample.mutate
+        end
       end
-      new_individuals = new_individuals.map(&:mutate)
-      new_individuals += individuals # place old individuals at the end to prefer childs when fitness is same
-
-      individuals = new_individuals.sort_by(&:fitness).take(values[:population_size])
-      puts "Iterations: #{iterations}, collisions: #{individuals.first.collisions}" if iterations % 1000 == 0
+      
+      sorted_individuals = (new_individuals + individuals).sort_by(&:fitness).take(values[:population_size])
+      if sorted_individuals.first.fitness < individuals.first.fitness
+        Main::print_status(iterations, sorted_individuals, time)
+      end
+      individuals = sorted_individuals
     end
-
-    iterations
+    
+    if individuals.first.fitness > 0
+      Main::print_status(iterations, individuals, time)
+      puts "=== unfinished"
+    else
+      puts "=== finished"
+    end
+  end
+  
+  def self.print_status(iterations, individuals, time)
+    diversity_array = []
+    individuals.each do |individual1|
+      individuals.each do |individual2|
+        diversity_array << individual1.distance_to(individual2)
+      end
+    end
+    diversity = diversity_array.mean
+    
+    puts "Iterations: #{iterations}, Collisions: #{individuals.first.fitness}, Time: #{Time.now - time}, Diversity: #{diversity}"
   end
 
   def self.read_timetable_data(number)
@@ -49,4 +77,4 @@ module Main
 end
 
 constraints = Main::read_timetable_data(4)
-Main::run(:constraints => constraints, :mutation => TripleSwapperWithTwoCollidingConstraintsMutation.new, :recombination => IdentityRecombination.new, :number_of_slots => 30, :population_size => 1)
+Main::run(:constraints => constraints, :mutation => TripleSwapperWithTwoCollidingConstraintsMutation.new, :recombination => MinCollisionsEdgeRecombination.new, :number_of_slots => 30, :population_size => 2, :childs => 1, :recombination_chance => 0.1, :mutation_chance => 1.0, :limit => 0)

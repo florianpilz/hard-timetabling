@@ -139,6 +139,14 @@ class Individual
     fitness
   end
   
+  def distance_to(other)
+    differing_constraints = 0
+    @constraints.each_index do |i|
+      differing_constraints += 1 unless @constraints[i] == other.constraints[i]
+    end
+    differing_constraints / @constraints.length.to_f
+  end
+  
   private
   
   def eval_collisions
