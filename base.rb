@@ -52,6 +52,11 @@ class Constraint
   def to_s
     "Klasse: #{@klass}, Lehrer: #{@teacher}, Raum: #{@room}"
   end
+  
+  def self.parse(string)
+    klass, teacher, room = string.scan(/C(\d).*S\d.*T(\d).*R(\d).*/).first.map!{ |number_as_string| number_as_string.to_i }
+    Constraint.new(:klass => klass, :teacher => teacher, :room => room)
+  end
 end
 
 class Period
