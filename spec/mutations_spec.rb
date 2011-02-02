@@ -34,7 +34,7 @@ describe "Mutations" do
         child.unfulfilled_constraints.should == 0
         child.constraints.length.should == individual.constraints.length
         child.fitness.should <= individual.fitness
-        @all_mutations_enhanced_fitness << (child.fitness != individual.fitness)
+        @all_mutations_enhanced_fitness << (child.fitness < individual.fitness)
       end
     end
     
