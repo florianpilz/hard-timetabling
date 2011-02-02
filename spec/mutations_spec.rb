@@ -36,6 +36,14 @@ describe "individual_generator" do
 end
 
 describe "Mutations" do
+  before(:all) do
+    @all_mutations_enhanced_fitness = []
+  end
+
+  after(:all) do
+    puts "\nAll Mutations enhanced fitness!" if @all_mutations_enhanced_fitness.all?
+  end
+  
   describe IdentityMutation do
     subject{ individual_generator(IdentityMutation.new) }    
     it "generates a child with the same constraint-permutation" do
@@ -59,7 +67,8 @@ describe "Mutations" do
         child.class == Individual
         child.should_not == individual
         child.unfulfilled_constraints.should == 0 # check for permutation
-        child.fitness.should < individual.fitness # FIXME
+        child.fitness.should <= individual.fitness
+        @all_mutations_enhanced_fitness << (child.fitness != individual.fitness)
       end
     end
     
