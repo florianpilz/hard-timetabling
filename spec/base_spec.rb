@@ -132,6 +132,27 @@ describe Individual do # TODO add tests for different granularity
   it "has 3 collisions" do
     subject.collisions.should == 3
   end
+  
+  it "has 3 collisions per constraint-combination with granularity 0" do
+    individual = Individual.new(:current_constraints => @constraints * 10,
+    :number_of_slots => 5,
+    :granularity => 0)
+    individual.collisions.should == 6 * 5 * 3 # combinations * slots * 3 per combination
+  end
+  
+  it "has 1 collision per constraint-combination with granularity 1" do
+    individual = Individual.new(:current_constraints => @constraints * 10,
+    :number_of_slots => 5,
+    :granularity => 1)
+    individual.collisions.should == 6 * 5 * 1 # combinations * slots * 1 per combination
+  end
+
+  it "has 1 collision per slot with granularity 2" do
+    individual = Individual.new(:current_constraints => @constraints * 10,
+    :number_of_slots => 5,
+    :granularity => 2)
+    individual.collisions.should == 5
+  end
 
   it "has a fitness of 'collisions' + 'unfulfilled_constraints'" do
     subject.fitness.should == subject.collisions + subject.unfulfilled_constraints
