@@ -26,25 +26,31 @@ describe "Recombinations" do
     end
   end
   
-  describe OrderingRecombination do
+  describe "fitness-changing recombinations" do
+    subject { [OrderingRecombination, MappingRecombination] }
+    
     it "generates valid childs with constraint-permutations" do
-      individual1 = individual_generator(:recombination => OrderingRecombination.new)
-      individual2 = individual1.copy
-      individual2.constraints.shuffle!
-      
-      child1, child2 = individual1.recombinate_with(individual2)
-      [child1, child2].each do |child|
-        child.class.should == Individual
-        child.should_not == individual1
-        child.should_not == individual2
-        child.unfulfilled_constraints.should == 0
-        child.constraints.length.should == individual1.constraints.length
-        @all_recombinations_enhanced_fitness << (child.fitness < individual1.fitness && child.fitness < individual2.fitness)
+      subject.each do |klass|
+        individual1 = individual_generator(:recombination => klass.new)
+        individual2 = individual1.copy
+        individual2.constraints.shuffle!
+
+        child1, child2 = individual1.recombinate_with(individual2)
+        [child1, child2].each do |child|
+          child.class.should == Individual
+          child.should_not == individual1
+          child.should_not == individual2
+          child.unfulfilled_constraints.should == 0
+          child.constraints.length.should == individual1.constraints.length
+          @all_recombinations_enhanced_fitness << (child.fitness < individual1.fitness && child.fitness < individual2.fitness)
+        end
       end
     end
     
     it "returns its class as name" do
-      OrderingRecombination.new.to_s.should == OrderingRecombination.to_s
+      subject.each do |klass|
+        klass.new.to_s.should == klass.to_s
+      end
     end
   end
 end

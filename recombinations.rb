@@ -2,6 +2,12 @@ class Recombination
   def to_s
     self.class.to_s
   end
+  
+  def call(individual1, individual2)
+    child1 = recombinate(individual1, individual2)
+    child2 = recombinate(individual2, individual1)
+    [child1, child2]
+  end
 end
 
 class IdentityRecombination < Recombination
@@ -11,12 +17,6 @@ class IdentityRecombination < Recombination
 end
 
 class OrderingRecombination < Recombination
-  def call(individual1, individual2)
-    child1 = recombinate(individual1, individual2)
-    child2 = recombinate(individual2, individual1)
-    [child1, child2]
-  end
-  
   def recombinate(individual1, individual2)
     constraints = []
     rand_length = rand(individual1.constraints.length + 1)
@@ -35,84 +35,37 @@ class OrderingRecombination < Recombination
   end
 end
 
-########################################################################
-def ordnungsrekombination(individual1, individual2)
-  periods = mutate_on_constraints(individual1.periods) do |individual1_constraints|
+class MappingRecombination < Recombination
+  def recombinate(individual1, individual2)
     constraints = []
-    rn = rand(individual1_constraints.length)
-    0.upto(rn) do |i|
-      constraints << individual1_constraints[i]
-    end
-    mutate_on_constraints(individual2.periods) do |individual2_constraints|
-      individual2_constraints.each do |constraint|
-        constraints << constraint unless constraints.include?(constraint)
-      end
-      constraints
-    end
-    constraints
-  end
-  individual1.class.new(periods, individual1.constraints)
-end
-
-def own_recombination(individual1, individual2)
-  periods = individual1.periods - individual1.colliding_periods
-  rest = []
-  (individual2.periods - individual2.colliding_periods).each do |period|
-    if periods.map{|p| period.constraints.map{|c| p.constraints.include?(c)}.any?}.any?
-      rest << period
-    else
-      periods << period
-    end
-  end
-  rest += individual1.colliding_periods + individual2.colliding_periods
-  
-  periods += mutate_on_constraints(rest) do |constraints|
-    remaining_constraints = []
-    constraints.each do |c|
-      remaining_constraints << c unless periods.map{|p| p.constraints.include?(c)}.any?
-    end
-    rooms = individual1.periods.first.constraints.length
-    new_constraints = remaining_constraints.take(rooms)
-    while not remaining_constraints.empty?
-      remaining_constraints.sort_by{}
-    end
-    new_constraints
-  end
-  
-  individual1.class.new(periods, individual1.constraints)
-end
-
-def mapping_recombination(individual1, individual2)
-  periods = mutate_on_constraints(individual1.periods) do |individual1_constraints|
-    constraints = []
-    rn_start = rand(individual1_constraints.length)
-    rn_end = rand(individual1_constraints.length)
+    rn_start = individual1.constraints.rand_index
+    rn_end = individual1.constraints.rand_index
     rn_start, rn_end = rn_end, rn_start if rn_start > rn_end
     
     rn_start.upto(rn_end) do |i|
-      constraints[i] = individual1_constraints[i]
+      constraints[i] = individual1.constraints[i]
     end
     
-    mutate_on_constraints(individual2.periods) do |individual2_constraints|
-      0.upto(rn_start - 1) do |i|
-        c = individual2_constraints[i]
-        c = individual1_constraints[individual2_constraints.index(c)] while constraints.include?(c)
-        constraints[i] = c
-      end
-
-      (rn_end + 1).upto(individual2_constraints.length - 1) do |i|
-        c = individual2_constraints[i]
-        c = individual1_constraints[individual2_constraints.index(c)] while constraints.include?(c)
-        constraints[i] = c
-      end
-
-      constraints
+    0.upto(rn_start) do |i|
+      c = individual2.constraints[i]
+      c = individual1.constraints[individual2.constraints.index(c)] while constraints.include?(c)
+      constraints[i] = c
     end
-    constraints
+    
+    (rn_end + 1).upto(individual1.constraints.length - 1) do |i|
+      c = individual2.constraints[i]
+      c = individual1.constraints[individual2.constraints.index(c)] while constraints.include?(c)
+      constraints[i] = c
+    end
+    
+    child = individual1.copy
+    child.constraints = constraints
+    child.eval_fitness
+    child
   end
-  individual1.class.new(periods, individual1.constraints)
 end
 
+########################################################################
 def edge_recombination(individual1, individual2, variation = 0)
   periods = mutate_on_constraints(individual1.periods) do |individual1_constraints|
     l = individual1_constraints.length
@@ -215,4 +168,32 @@ def calc_collisions(c1, c2) # TODO remove
   collisions += 1 if c1.teacher == c2.teacher
   collisions += 1 if c1.room == c2.room
   collisions
+end
+
+def own_recombination(individual1, individual2)
+  periods = individual1.periods - individual1.colliding_periods
+  rest = []
+  (individual2.periods - individual2.colliding_periods).each do |period|
+    if periods.map{|p| period.constraints.map{|c| p.constraints.include?(c)}.any?}.any?
+      rest << period
+    else
+      periods << period
+    end
+  end
+  rest += individual1.colliding_periods + individual2.colliding_periods
+  
+  periods += mutate_on_constraints(rest) do |constraints|
+    remaining_constraints = []
+    constraints.each do |c|
+      remaining_constraints << c unless periods.map{|p| p.constraints.include?(c)}.any?
+    end
+    rooms = individual1.periods.first.constraints.length
+    new_constraints = remaining_constraints.take(rooms)
+    while not remaining_constraints.empty?
+      remaining_constraints.sort_by{}
+    end
+    new_constraints
+  end
+  
+  individual1.class.new(periods, individual1.constraints)
 end
