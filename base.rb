@@ -1,3 +1,6 @@
+# Copyright (c) 2011 Florian Pilz
+# See MIT-LICENSE for license information.
+
 class Array
   def sum
     inject( nil ) { |sum,x| sum ? sum+x : x }

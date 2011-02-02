@@ -1,3 +1,6 @@
+# Copyright (c) 2011 Florian Pilz
+# See MIT-LICENSE for license information.
+
 require 'spec_helper'
 
 describe "Recombinations" do

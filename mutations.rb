@@ -1,3 +1,6 @@
+# Copyright (c) 2011 Florian Pilz
+# See MIT-LICENSE for license information.
+
 class Mutation
   def to_s
     self.class.to_s
