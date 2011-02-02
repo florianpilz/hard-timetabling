@@ -12,15 +12,16 @@ SLOTS = 100
 SLOT_SIZE = 2
 MAX_COLLISIONS = SLOTS * (SLOT_SIZE - 1).fak_sum * 3
 
-def individual_generator(mutation = IdentityMutation.new, recombination = IdentityRecombination.new)
+def individual_generator(values = {})
+  values = {:mutation => IdentityMutation.new, :recombination => IdentityRecombination.new}.merge(values)
   constraints = []
   (SLOTS * SLOT_SIZE).times {|i| constraints << Constraint.new(:klass => i / SLOT_SIZE, :teacher => i / SLOT_SIZE, :room => i / SLOT_SIZE)}
 
   Individual.new(
     :current_constraints => constraints,
     :expected_constraints => constraints,
-    :mutation => mutation,
-    :recombination => IdentityRecombination.new,
+    :mutation => values[:mutation],
+    :recombination => values[:recombination],
     :number_of_slots => SLOTS,
     :debug => true
   )

@@ -10,7 +10,7 @@ describe "Mutations" do
   end
   
   describe IdentityMutation do
-    subject{ individual_generator(IdentityMutation.new) }    
+    subject{ individual_generator(:mutation => IdentityMutation.new) }    
     it "generates a child with the same constraint-permutation" do
       child = subject.mutate
       child.class.should == Individual
@@ -27,7 +27,7 @@ describe "Mutations" do
     subject{ [DumbSwappingMutation, CollidingConstraintsSwapperMutation, InvertingMutation, InvertingWithCollisionMutation, MixingMutation, SwappingWithCollidingPeriodMutation, SwappingWithCollidingConstraintMutation, DumbTripleSwapperMutation, DumbTripleSwapperMutation, TripleSwapperWithTwoCollidingPeriodsMutation, TripleSwapperWithTwoCollidingConstraintsMutation] }
     it "generates a child with the same constraint-permutation" do
       subject.each do |klass|
-        individual = individual_generator(klass.new)
+        individual = individual_generator(:mutation => klass.new)
         child = individual.mutate
         child.class == Individual
         child.should_not == individual
