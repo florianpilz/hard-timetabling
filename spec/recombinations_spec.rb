@@ -27,7 +27,7 @@ describe "Recombinations" do
   end
   
   describe "fitness-changing recombinations" do
-    subject { [OrderingRecombination, MappingRecombination] }
+    subject { [OrderingRecombination, MappingRecombination, EdgeRecombination] }
     
     it "generates valid childs with constraint-permutations" do
       subject.each do |klass|

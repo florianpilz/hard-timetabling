@@ -65,6 +65,53 @@ class MappingRecombination < Recombination
   end
 end
 
+class EdgeRecombination < Recombination
+  def recombinate(individual1, individual2)
+    constraints = []
+    used_constraints = []
+    length = individual1.constraints.length
+    edges = Hash.new do |hash, key|
+      hash[key] = Array.new # default value
+    end
+    
+    individual1.constraints.each_with_index do |constraint, i|
+      edges[constraint] << individual1.constraints[(i + 1) % length]
+      edges[constraint] << individual1.constraints[(i - 1) % length]
+    end
+    
+    individual2.constraints.each_with_index do |constraint, i|
+      edges[constraint] << individual2.constraints[(i + 1) % length]
+      edges[constraint] << individual2.constraints[(i - 1) % length]
+    end
+    
+    constraints << individual1.constraints.first
+    used_constraints << individual1.constraints.first
+    1.upto(length - 1) do |i|
+      sorted_possibilities = (edges[constraints.last] - used_constraints).sort_by{|c| (edges[c] - used_constraints).length}
+      k = []
+      sorted_possibilities.each do |c|
+        break if (edges[c] - used_constraints).length > (edges[sorted_possibilities.first] - used_constraints).length
+        k << c
+      end
+      
+      if k.empty?
+        constraint = (individual1.constraints - used_constraints).sample
+        constraints << constraint
+        used_constraints << constraint
+      else
+        constraint = k.sample
+        constraints << constraint
+        used_constraints << constraint
+      end
+    end
+    
+    child = individual1.copy
+    child.constraints = constraints
+    child.eval_fitness
+    child
+  end
+end
+
 ########################################################################
 def edge_recombination(individual1, individual2, variation = 0)
   periods = mutate_on_constraints(individual1.periods) do |individual1_constraints|
