@@ -31,7 +31,8 @@ describe "Mutations" do
         child = individual.mutate
         child.class == Individual
         child.should_not == individual
-        child.unfulfilled_constraints.should == 0 # check for permutation
+        child.unfulfilled_constraints.should == 0
+        child.constraints.length.should == individual.constraints.length
         child.fitness.should <= individual.fitness
         @all_mutations_enhanced_fitness << (child.fitness != individual.fitness)
       end
