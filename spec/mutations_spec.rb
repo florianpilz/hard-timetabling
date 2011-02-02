@@ -51,7 +51,7 @@ describe "Mutations" do
   end
   
   describe "fitness-changing mutations" do
-    subject{ [DumbSwappingMutation, CollidingPeriodsSwapperMutation, InvertingMutation, InvertingWithCollisionMutation, MixingMutation] }
+    subject{ [DumbSwappingMutation, CollidingConstraintsSwapperMutation, InvertingMutation, InvertingWithCollisionMutation, MixingMutation, SwappingWithCollidingPeriodMutation, SwappingWithCollidingConstraintMutation, DumbTripleSwapperMutation, DumbTripleSwapperMutation, TripleSwapperWithTwoCollidingPeriodsMutation, TripleSwapperWithTwoCollidingConstraintsMutation] }
     it "generates a child with the same constraint-permutation" do
       subject.each do |klass|
         individual = individual_generator(klass.new)
