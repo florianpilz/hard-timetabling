@@ -57,6 +57,14 @@ describe Constraint do
   it "returns it's klass" do
     subject.klass.should == 1
   end
+  
+  it "parses a given string correctly" do
+    string = "Schedule C1 taught S2 by T3 in R4 1 times"
+    constraint = Constraint.parse(string)
+    constraint.klass.should == 1
+    constraint.teacher.should == 3
+    constraint.room.should == 4
+  end
 end
 
 describe Period do
