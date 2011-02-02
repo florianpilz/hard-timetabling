@@ -161,6 +161,24 @@ describe Individual do # TODO add tests for different granularity
     :granularity => 2)
     individual.collisions.should == 5
   end
+  
+  it "has a distance of 0 to itself" do
+    individual = Individual.new(:current_constraints => @constraints,
+    :number_of_slots => 1)
+    individual.distance_to(individual).should == 0
+  end
+  
+  it "has a distance of 0.5 if 4 of 8 constraints are different" do
+    individual = Individual.new(
+    :current_constraints => @constraints * 4,
+    :number_of_slots => 1)
+    
+    other = Individual.new(
+    :current_constraints => [@expected_constraint] * 4 + @constraints * 2,
+    :number_of_slots => 1)
+    
+    individual.distance_to(other).should == 0.5
+  end
 
   it "has a fitness of 'collisions' + 'unfulfilled_constraints'" do
     subject.fitness.should == subject.collisions + subject.unfulfilled_constraints
