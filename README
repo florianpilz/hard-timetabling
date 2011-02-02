@@ -1,0 +1,18 @@
+A hard timetable is a timetable which has a single solution to fulfill all constraints.
+Constraints are:
+  1. All required classes are scheduled
+  2. There are no collisions
+An collision occurs if two classes, teachers or rooms are planned to use at the same time.
+
+This repository is a toolbox to solve this problem with an evolutionary algorithm.
+Several permutating operations are implemented and work out of the box.
+To start the solver type "ruby timetabling.rb".
+Two optional arguments are accepted:
+  1. difficulty of the timetable, ranging from 4 to 8
+  2. time limit in seconds
+  
+The timetable-data was retrieved from http://people.brunel.ac.uk/~mastjjb/jeb/orlib/tableinfo.html
+
+You need rspec 2.4.0 to run the test. For automatic testing install watchr and type "watchr watchr.rb"
+
+All files are licensed under the MIT license. See MIT-LICENSE for details.
