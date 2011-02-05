@@ -102,11 +102,16 @@ begin
   
   iteration_limit = ARGV[3].to_i
   time_limit = ARGV[4].to_i
+  cycles = ARGV[5].to_i
+  cycles = 1 if cycles == 0
 rescue Exception
-  puts "Usage: ruby timetabling.rb <timetable> <mutation> <recombination> <max iterations> <time limit>"
+  puts "Usage: ruby timetabling.rb <timetable> <mutation> <recombination> <max iterations> <time limit> <cycles>"
   puts "timetable is an integer in {4, 5, 6, 7, 8}"
   exit
 end
 
 constraints = Main::read_timetable_data(timetable)
-Main::run(:constraints => constraints, :mutation => mutationclass.new, :recombination => recombinationclass.new, :number_of_slots => 30, :population_size => 1, :childs => 1, :recombination_chance => 0.0, :mutation_chance => 1.0, :iteration_limit => iteration_limit, :time_limit => time_limit)
+
+cycles.times do
+  Main::run(:constraints => constraints, :mutation => mutationclass.new, :recombination => recombinationclass.new, :number_of_slots => 30, :population_size => 1, :childs => 1, :recombination_chance => 0.0, :mutation_chance => 1.0, :iteration_limit => iteration_limit, :time_limit => time_limit)
+end
