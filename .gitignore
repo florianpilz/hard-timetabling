@@ -5,3 +5,5 @@ Stundenplanung.pdf
 .DS_Store
 output-old
 output
+kernkraft.sh
+kernkraft-script-generator.rb
