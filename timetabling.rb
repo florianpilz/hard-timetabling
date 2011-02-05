@@ -31,7 +31,7 @@ module Main
     individuals = individuals.sort_by(&:fitness)
     puts "=== Start with population size of #{values[:population_size]}\n=== Mutation: #{values[:mutation]}\n=== Recombination: #{values[:recombination]}\n"
     
-    while individuals.first.fitness > 0 && (values[:limit] == 0 || values[:limit] > Time.now - time)
+    while individuals.first.fitness > 0 && (values[:time_limit] == 0 || values[:time_limit] > Time.now - time) && (values[:iteration_limit] == 0 || values[:iteration_limit] > iterations)
       iterations += 1
       
       new_individuals = []
@@ -90,5 +90,23 @@ Signal.trap("TSTP") do |x| # Control-Z
   Main::print_info = true
 end
 
-constraints = Main::read_timetable_data(ARGV[0] || 4)
-Main::run(:constraints => constraints, :mutation => TripleSwapperWithTwoCollidingConstraintsMutation.new, :recombination => MinCollisionsEdgeRecombination.new, :number_of_slots => 30, :population_size => 1, :childs => 1, :recombination_chance => 0.0, :mutation_chance => 1.0, :limit => ARGV[1] || 0)
+begin
+  timetable = ARGV[0]
+  raise RuntimeError unless [4,5,6,7,8].include?(timetable.to_i)
+  
+  mutationclass = Kernel.const_get(ARGV[1])
+  raise RuntimeError unless mutationclass.superclass == Mutation
+  
+  recombinationclass = Kernel.const_get(ARGV[2])
+  raise RuntimeError unless recombinationclass.superclass == Recombination
+  
+  iteration_limit = ARGV[3].to_i
+  time_limit = ARGV[4].to_i
+rescue Exception
+  puts "Usage: ruby timetabling.rb <timetable> <mutation> <recombination> <max iterations> <time limit>"
+  puts "timetable is an integer in {4, 5, 6, 7, 8}"
+  exit
+end
+
+constraints = Main::read_timetable_data(timetable)
+Main::run(:constraints => constraints, :mutation => mutationclass.new, :recombination => recombinationclass.new, :number_of_slots => 30, :population_size => 1, :childs => 1, :recombination_chance => 0.0, :mutation_chance => 1.0, :iteration_limit => iteration_limit, :time_limit => time_limit)
