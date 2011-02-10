@@ -93,7 +93,7 @@ module Timetabling
     lines = File.read(file).split("\n")
     filtered_lines = lines.grep(/class .* < #{superclass}/)
     matches = []
-    filtered_lines.each{|line| line.scan(/class (.*) < #{superclass}/){|m| matches <<  m.first.first}}
+    filtered_lines.each{|line| line.scan(/class (.*) < #{superclass}/){|m| matches <<  m.first.first.sub(superclass, "")}}
     matches.join("\n")
   end
 end
@@ -112,8 +112,8 @@ Usage:
 where [options] are:
 EOS
   opt :severity, "Severity of the timetabling problem", :default => 4
-  opt :mutation, "Mutation used in the algorithm, see lib/mutations.rb for options", :default => "TripleSwapperWithTwoCollidingConstraintsMutation"
-  opt :recombination, "Recombination used in the algorithm, see lib/recombinations.rb for options", :default => "IdentityRecombination"
+  opt :mutation, "Mutation used in the algorithm", :default => "TripleSwapperWithTwoCollidingConstraints"
+  opt :recombination, "Recombination used in the algorithm", :default => "Identity"
   opt :iterations, "Algorithm will stop after given number of iterations or run indefinitely if 0", :default => 5_000_000
   opt :time_limit, "Algorithm will stop after given time limit or run indefinitely if 0", :default => 0
   opt :cycles, "Determines how often the algorithm will be run", :default => 1
@@ -126,9 +126,9 @@ end
 # validations
 Trollop::die :severity, "must be in [4, 5, 6, 7, 8]" unless [4,5,6,7,8].include?(options[:severity])
 
-mutation = Kernel.const_get(options[:mutation]) rescue Trollop::die(:mutation, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("mutations.rb", "Mutation"))
+mutation = Kernel.const_get(options[:mutation] + "Mutation") rescue Trollop::die(:mutation, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("mutations.rb", "Mutation"))
 
-recombination = Kernel.const_get(options[:recombination]) rescue Trollop::die(:recombination, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("recombinations.rb", "Recombination"))
+recombination = Kernel.const_get(options[:recombination] + "Recombination") rescue Trollop::die(:recombination, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("recombinations.rb", "Recombination"))
 
 Trollop::die :cycles, "must be 1 or greater" unless options[:cycles] > 0
 Trollop::die :population, "must be 1 or greater" unless options[:population] > 0
