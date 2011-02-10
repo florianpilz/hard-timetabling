@@ -62,7 +62,7 @@ class MappingRecombination < Recombination
   end
 end
 
-class EdgeRecombinationTemplate < Recombination
+module EdgeRecombinationTemplate
   
   private
   
@@ -120,7 +120,9 @@ class EdgeRecombinationTemplate < Recombination
   end
 end
 
-class MinEdgesEdgeRecombination < EdgeRecombinationTemplate
+class MinEdgesEdgeRecombination < Recombination
+  include EdgeRecombinationTemplate
+
   def call(individual1, individual2)
     call_template(individual1, individual2) do |constraint, edges, used_constraints, _|
       (edges[constraint] - used_constraints).length
@@ -128,7 +130,9 @@ class MinEdgesEdgeRecombination < EdgeRecombinationTemplate
   end
 end
 
-class MinCollisionsWithLastConstraintEdgeRecombination < EdgeRecombinationTemplate
+class MinCollisionsWithLastConstraintEdgeRecombination < Recombination
+  include EdgeRecombinationTemplate
+
   def call(individual1, individual2)
     call_template(individual1, individual2) do |constraint, _, _, current_constraints|
       calc_collisions(current_constraints.last, constraint)
@@ -136,7 +140,9 @@ class MinCollisionsWithLastConstraintEdgeRecombination < EdgeRecombinationTempla
   end
 end
 
-class MinCollisionsEdgeRecombination < EdgeRecombinationTemplate
+class MinCollisionsEdgeRecombination < Recombination
+  include EdgeRecombinationTemplate
+  
   def call(individual1, individual2)
     slot_size = individual1.constraints.length / individual1.number_of_slots
     call_template(individual1, individual2) do |constraint, _, _, current_constraints|
