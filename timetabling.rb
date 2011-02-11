@@ -51,7 +51,8 @@ module Timetabling
         end
       end
       
-      sorted_individuals = (new_individuals + individuals).sort_by(&:fitness).take(values[:population_size])
+      selectable_individuals = values[:parents_die] ? new_individuals : new_individuals + individuals
+      sorted_individuals = selectable_individuals.sort_by(&:fitness).take(values[:population_size])
       if sorted_individuals.first.fitness < individuals.first.fitness || @print_info
         @print_info = false
         Timetabling::print_status(iterations, values[:childs] * iterations + values[:population_size], sorted_individuals, time)
@@ -122,6 +123,7 @@ EOS
   opt :childs, "Number of childs generated each iteration", :default => 1, :short => "l"
   opt :recombination_chance, "Chance that recombination is used to generate child", :default => 0.0
   opt :mutation_chance, "Chance that mutation is used, after recombination was used", :default => 1.0
+  opt :parents_die, "Parents will die each iteration if set, i.e. a comma-selection is used", :default => false
 end
 
 # validations
@@ -141,5 +143,5 @@ Trollop::die :mutation_chance, "must be in [0, 1]" unless options[:mutation_chan
 constraints = Timetabling::read_timetable_data(options[:severity])
 
 options[:cycles].times do
-  Timetabling::run(:constraints => constraints, :mutation => mutation.new, :recombination => recombination.new, :number_of_slots => 30, :population_size => options[:population], :childs => options[:childs], :recombination_chance => options[:recombination_chance], :mutation_chance => options[:mutation_chance], :iteration_limit => options[:iterations], :time_limit => options[:time_limit], :evaluations => options[:evaluations])
+  Timetabling::run(:constraints => constraints, :mutation => mutation.new, :recombination => recombination.new, :number_of_slots => 30, :population_size => options[:population], :childs => options[:childs], :recombination_chance => options[:recombination_chance], :mutation_chance => options[:mutation_chance], :iteration_limit => options[:iterations], :time_limit => options[:time_limit], :evaluations => options[:evaluations], :parents_die => options[:parents_die])
 end
