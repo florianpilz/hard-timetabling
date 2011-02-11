@@ -35,7 +35,7 @@ module Timetabling
     puts "=== Mutation: #{values[:mutation]} (chance: #{values[:mutation_chance]})"
     puts "=== Recombination: #{values[:recombination]} (chance: #{values[:recombination_chance]})"
     
-    while individuals.first.fitness > 0 && (values[:time_limit] == 0 || values[:time_limit] > Time.now - time) && (values[:iteration_limit] == 0 || values[:iteration_limit] > iterations)
+    while individuals.first.fitness > 0 && (values[:time_limit] == 0 || values[:time_limit] > Time.now - time) && (values[:iteration_limit] == 0 || values[:iteration_limit] > iterations) && (values[:evaluations] == 0 || values[:evaluations] > values[:childs] * iterations)
       iterations += 1
       
       new_individuals = []
@@ -54,20 +54,20 @@ module Timetabling
       sorted_individuals = (new_individuals + individuals).sort_by(&:fitness).take(values[:population_size])
       if sorted_individuals.first.fitness < individuals.first.fitness || @print_info
         @print_info = false
-        Timetabling::print_status(iterations, sorted_individuals, time)
+        Timetabling::print_status(iterations, values[:childs] * iterations + values[:population_size], sorted_individuals, time)
       end
       individuals = sorted_individuals
     end
     
     if individuals.first.fitness > 0
-      Timetabling::print_status(iterations, individuals, time)
+      Timetabling::print_status(iterations, values[:childs] * iterations + values[:population_size], sorted_individuals, time)
       puts "=== unfinished"
     else
       puts "=== finished"
     end
   end
   
-  def self.print_status(iterations, individuals, time)
+  def self.print_status(iterations, evaluations, individuals, time)
     diversity_array = []
     individuals.each do |individual1|
       individuals.each do |individual2|
@@ -76,7 +76,7 @@ module Timetabling
     end
     diversity = diversity_array.mean
     
-    puts "Iterations: #{iterations}, Collisions: #{individuals.first.fitness}, Time: #{Time.now - time}, Diversity: #{diversity}"
+    puts "Iterations: #{iterations}, Evaluations: #{evaluations}, Collisions: #{individuals.first.fitness}, Time: #{Time.now - time}, Diversity: #{diversity}"
   end
 
   def self.read_timetable_data(number)
@@ -114,8 +114,9 @@ EOS
   opt :severity, "Severity of the timetabling problem", :default => 4
   opt :mutation, "Mutation used in the algorithm", :default => "TripleSwapperWithTwoCollidingConstraints"
   opt :recombination, "Recombination used in the algorithm", :default => "Identity"
-  opt :iterations, "Algorithm will stop after given number of iterations or run indefinitely if 0", :default => 5_000_000
+  opt :iterations, "Algorithm will stop after given number of iterations or run indefinitely if 0", :default => 0
   opt :time_limit, "Algorithm will stop after given time limit or run indefinitely if 0", :default => 0
+  opt :evaluations, "Algorithm will stop after given number of evaluations (= childs per generation * iterations + population size) or run indefinitely if 0", :default => 5_000_000
   opt :cycles, "Determines how often the algorithm will be run", :default => 1
   opt :population, "Size of the population", :default => 1
   opt :childs, "Number of childs generated each iteration", :default => 1, :short => "l"
@@ -140,5 +141,5 @@ Trollop::die :mutation_chance, "must be in [0, 1]" unless options[:mutation_chan
 constraints = Timetabling::read_timetable_data(options[:severity])
 
 options[:cycles].times do
-  Timetabling::run(:constraints => constraints, :mutation => mutation.new, :recombination => recombination.new, :number_of_slots => 30, :population_size => options[:population], :childs => options[:childs], :recombination_chance => options[:recombination_chance], :mutation_chance => options[:mutation_chance], :iteration_limit => options[:iterations], :time_limit => options[:time_limit])
+  Timetabling::run(:constraints => constraints, :mutation => mutation.new, :recombination => recombination.new, :number_of_slots => 30, :population_size => options[:population], :childs => options[:childs], :recombination_chance => options[:recombination_chance], :mutation_chance => options[:mutation_chance], :iteration_limit => options[:iterations], :time_limit => options[:time_limit], :evaluations => options[:evaluations])
 end
