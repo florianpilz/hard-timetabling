@@ -93,7 +93,7 @@ module Timetabling
     lines = File.read(file).split("\n")
     filtered_lines = lines.grep(/class .* < #{superclass}/)
     matches = []
-    filtered_lines.each{|line| line.scan(/class (.*) < #{superclass}/){|m| matches <<  m.first.first.sub(superclass, "")}}
+    filtered_lines.each{|line| line.scan(/class (.*) < #{superclass}/){|m| matches << m.first.sub(superclass, "")}}
     matches.join("\n")
   end
 end
