@@ -42,7 +42,7 @@ module Timetabling
       values[:childs].times do
         if rand <= values[:recombination_chance]
           child = individuals.sample.recombinate_with(individuals.sample)
-          if rand <= values[:mutation_chance]
+          if child.fitness > 0 && rand <= values[:mutation_chance]
             child = child.mutate
           end
           new_individuals << child
