@@ -4,6 +4,7 @@
 require 'base'
 require 'mutations'
 require 'recombinations'
+require 'selections'
 require 'rubygems'
 require 'trollop'
 
@@ -50,18 +51,18 @@ module Timetabling
           new_individuals << individuals.sample.mutate
         end
       end
-      
+
       selectable_individuals = values[:parents_die] ? new_individuals : new_individuals + individuals
-      sorted_individuals = selectable_individuals.sort_by(&:fitness).take(values[:population_size])
-      if sorted_individuals.first.fitness < individuals.first.fitness || @print_info
+      selected_individuals = values[:environmental_selection].select(values[:population_size], selectable_individuals, values).sort_by(&:fitness)
+      if selected_individuals.first.fitness < individuals.first.fitness || @print_info
         @print_info = false
-        Timetabling::print_status(iterations, values[:childs] * iterations + values[:population_size], sorted_individuals, time)
+        Timetabling::print_status(iterations, values[:childs] * iterations + values[:population_size], selected_individuals, time)
       end
-      individuals = sorted_individuals
+      individuals = selected_individuals
     end
     
     if individuals.first.fitness > 0
-      Timetabling::print_status(iterations, values[:childs] * iterations + values[:population_size], sorted_individuals, time)
+      Timetabling::print_status(iterations, values[:childs] * iterations + values[:population_size], selected_individuals, time)
       puts "=== unfinished"
     else
       puts "=== finished"
@@ -124,14 +125,18 @@ EOS
   opt :recombination_chance, "Chance that recombination is used to generate child", :default => 0.0
   opt :mutation_chance, "Chance that mutation is used, after recombination was used", :default => 1.0
   opt :parents_die, "Parents will die each iteration if set, i.e. a comma-selection is used", :default => false
+  opt :environmental_selection, "Selection used to determine which individuals will form the next generation", :default => "Best"
+  opt :stages, "Number of stages if NStageTournamentSelection is used", :default => 2
 end
 
 # validations
 Trollop::die :severity, "must be in [4, 5, 6, 7, 8]" unless [4,5,6,7,8].include?(options[:severity])
 
-mutation = Kernel.const_get(options[:mutation] + "Mutation") rescue Trollop::die(:mutation, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("mutations.rb", "Mutation"))
+mutation = Kernel.const_get(options[:mutation] + "Mutation").new rescue Trollop::die(:mutation, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("mutations.rb", "Mutation"))
 
-recombination = Kernel.const_get(options[:recombination] + "Recombination") rescue Trollop::die(:recombination, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("recombinations.rb", "Recombination"))
+recombination = Kernel.const_get(options[:recombination] + "Recombination").new rescue Trollop::die(:recombination, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("recombinations.rb", "Recombination"))
+
+environmental_selection = Kernel.const_get(options[:environmental_selection] + "Selection").new rescue Trollop::die(:environmental_selection, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("selections.rb", "Selection"))
 
 Trollop::die :cycles, "must be 1 or greater" unless options[:cycles] > 0
 Trollop::die :population, "must be 1 or greater" unless options[:population] > 0
@@ -143,5 +148,5 @@ Trollop::die :mutation_chance, "must be in [0, 1]" unless options[:mutation_chan
 constraints = Timetabling::read_timetable_data(options[:severity])
 
 options[:cycles].times do
-  Timetabling::run(:constraints => constraints, :mutation => mutation.new, :recombination => recombination.new, :number_of_slots => 30, :population_size => options[:population], :childs => options[:childs], :recombination_chance => options[:recombination_chance], :mutation_chance => options[:mutation_chance], :iteration_limit => options[:iterations], :time_limit => options[:time_limit], :evaluations => options[:evaluations], :parents_die => options[:parents_die])
+  Timetabling::run(:constraints => constraints, :mutation => mutation, :recombination => recombination, :number_of_slots => 30, :population_size => options[:population], :childs => options[:childs], :recombination_chance => options[:recombination_chance], :mutation_chance => options[:mutation_chance], :iteration_limit => options[:iterations], :time_limit => options[:time_limit], :evaluations => options[:evaluations], :parents_die => options[:parents_die], :stages => options[:stages], :environmental_selection => environmental_selection)
 end
