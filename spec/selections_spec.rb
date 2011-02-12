@@ -63,4 +63,16 @@ describe "Selections" do
       end
     end
   end
+
+  describe UniformSelection do
+    subject { UniformSelection.new }
+    
+    it "yields appropriately chosen individuals" do
+      selection = subject.select(5, @population)
+      selection.length.should == 5
+      selection.each do |individual|
+        individual.class.should == MockIndividual
+      end
+    end
+  end
 end

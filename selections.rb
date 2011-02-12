@@ -49,3 +49,11 @@ class NStageTournamentSelection < Selection
     scores.sort_by(&:wins).reverse.take(x).map(&:individual)
   end
 end
+
+class UniformSelection < Selection
+  def select(x, population)
+    selection = []
+    x.times { selection << population.sample }
+    selection
+  end
+end
