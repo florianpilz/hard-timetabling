@@ -8,31 +8,58 @@ class MockIndividual
 end
 
 describe "Selections" do
-  describe RankbasedStochasticUniversalSamplingSelection do
-    subject{ RankbasedStochasticUniversalSamplingSelection.new }
+  before(:all) do
+    @one = MockIndividual.new(1) # best solution (least collisions)
+    @two = MockIndividual.new(2)
+    @three = MockIndividual.new(3)
+    @four = MockIndividual.new(4)
+    @five = MockIndividual.new(5)
+    @six = MockIndividual.new(6)
+    @seven = MockIndividual.new(7)
+    @eight = MockIndividual.new(8)
+    @nine = MockIndividual.new(9)
+    @ten = MockIndividual.new(10) # worst solution
+    @population = [@one, @two, @three, @four, @five, @six, @seven, @eight, @nine, @ten].shuffle
+  end
+  
+  describe RankbasedRouletteWheelSelection do
+    subject{ RankbasedRouletteWheelSelection.new }
     
-    it "yields an appropriate amount of individuals" do
-      one = MockIndividual.new(1) # best solution (least collisions)
-      two = MockIndividual.new(2)
-      three = MockIndividual.new(3)
-      four = MockIndividual.new(4)
-      five = MockIndividual.new(5)
-      six = MockIndividual.new(6)
-      seven = MockIndividual.new(7)
-      eight = MockIndividual.new(8)
-      nine = MockIndividual.new(9)
-      ten = MockIndividual.new(10) # worst solution
-      population = [one, two, three, four, five, six, seven, eight, nine, ten].shuffle
+    it "yields appropriately chosen individuals" do
+      selection = subject.select(5, @population)
+      selection.length.should == 5
       
-      selection = subject.select(5, population)
-      
-      if selection.include?(ten)
-        selection.should include(six)
-        selection.should include(four)
-        selection.should include(three)
-        selection.should include(two)
+      if selection.include?(@ten)
+        selection.should include(@six)
+        selection.should include(@four)
+        selection.should include(@three)
+        selection.should include(@two)
       else
-        selection.should include(one)
+        selection.should include(@one)
+      end
+    end
+  end
+  
+  describe BestSelection do
+    subject{ BestSelection.new }
+    
+    it "yields appropriately chosen individuals" do
+      selection = subject.select(5, @population)
+      selection.length.should == 5
+      selection.should == [@one, @two, @three, @four, @five]
+    end
+  end
+  
+  describe NStageTournamentSelection do
+    subject { NStageTournamentSelection.new }
+    
+    it "yields appropriately chosen individuals" do
+      selection = subject.select(5, @population, {:tournaments => 2})
+      selection.length.should == 5
+      selection.should_not include(@ten) # may fail if (nearly) every individual won 0 times
+      selection.should == selection.uniq # no duplicates
+      selection.each do |individual|
+        individual.class.should == MockIndividual
       end
     end
   end
