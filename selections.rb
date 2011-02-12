@@ -33,7 +33,7 @@ class BestSelection < Selection
 end
 
 class NStageTournamentSelection < Selection
-  def select(x, population, options = {:tournaments => 2})
+  def select(x, population, options = {:stages => 2})
     scores = []
     population.each do |individual|
       tournament_results = OpenStruct.new
@@ -41,7 +41,7 @@ class NStageTournamentSelection < Selection
       tournament_results.wins = 0
       scores << tournament_results
       
-      options[:tournaments].times do
+      options[:stages].times do
         tournament_results.wins += 1 if individual.fitness < population.sample.fitness
       end
     end
@@ -51,7 +51,7 @@ class NStageTournamentSelection < Selection
 end
 
 class UniformSelection < Selection
-  def select(x, population)
+  def select(x, population, options = {})
     selection = []
     x.times { selection << population.sample }
     selection

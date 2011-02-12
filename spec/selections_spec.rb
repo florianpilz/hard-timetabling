@@ -38,6 +38,10 @@ describe "Selections" do
         selection.should include(@one)
       end
     end
+    
+    it "accepts an option hash" do
+      subject.select(5, @population, {}).length.should == 5
+    end
   end
   
   describe BestSelection do
@@ -48,19 +52,28 @@ describe "Selections" do
       selection.length.should == 5
       selection.should == [@one, @two, @three, @four, @five]
     end
+    
+    it "accepts an option hash" do
+      subject.select(5, @population, {}).length.should == 5
+    end
   end
   
   describe NStageTournamentSelection do
     subject { NStageTournamentSelection.new }
     
     it "yields appropriately chosen individuals" do
-      selection = subject.select(5, @population, {:tournaments => 2})
+      selection = subject.select(5, @population, {:stages => 2})
       selection.length.should == 5
       selection.should_not include(@ten) # may fail if (nearly) every individual won 0 times
       selection.should == selection.uniq # no duplicates
       selection.each do |individual|
         individual.class.should == MockIndividual
       end
+    end
+    
+    it "accepts an option hash" do
+      options = {:stages => 1}
+      subject.select(5, @population, options).length.should == 5
     end
   end
 
@@ -73,6 +86,10 @@ describe "Selections" do
       selection.each do |individual|
         individual.class.should == MockIndividual
       end
+    end
+    
+    it "accepts an option hash" do
+      subject.select(5, @population, {}).length.should == 5
     end
   end
 end
