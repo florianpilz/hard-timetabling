@@ -141,6 +141,35 @@ class TripleSwapperWithTwoCollidingPeriodsMutation < Mutation
   end
 end
 
+class TripleSwapperWithOneCollidingPeriodMutation < Mutation
+  def call(individual)
+    child = individual.copy
+    cp = child.constraints.to_periods(child.number_of_slots).select{|p| p.collision?}
+    
+    rn1 = child.constraints.rand_index
+    rn2 = child.constraints.rand_index
+    rp = cp.rand_index
+    rc = cp[rp].constraints.rand_index
+    rn3 = child.constraints.index(cp[rp].constraints[rc])
+    
+    c1 = child.constraints[rn1]
+    c2 = child.constraints[rn2]
+    c3 = child.constraints[rn3]
+    
+    unless c1 == c3
+      child.constraints[rn1] = c2
+      child.constraints[rn2] = c3
+      child.constraints[rn3] = c1
+    else
+      child.constraints[rn2] = c3
+      child.constraints[rn3] = c2
+    end 
+    
+    child.eval_fitness
+    child
+  end
+end
+
 class TripleSwapperWithTwoCollidingConstraintsMutation < Mutation
   def call(individual)
     child = individual.copy
