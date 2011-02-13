@@ -126,7 +126,7 @@ EOS
   opt :mutation_chance, "Chance that mutation is used, after recombination was used", :default => 1.0
   opt :parents_die, "Parents will die each iteration if set, i.e. a comma-selection is used", :default => false
   opt :environmental_selection, "Selection used to determine which individuals will form the next generation", :default => "Best"
-  opt :stages, "Number of stages if NStageTournamentSelection is used", :default => 2
+  opt :stages, "Number of stages if NStageTournamentSelection is used", :default => 3
 end
 
 # validations
