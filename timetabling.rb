@@ -5,7 +5,6 @@ require 'base'
 require 'mutations'
 require 'recombinations'
 require 'selections'
-require 'rubygems'
 require 'trollop'
 
 # offene Fragen:
