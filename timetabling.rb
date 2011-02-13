@@ -114,8 +114,8 @@ Usage:
 where [options] are:
 EOS
   opt :severity, "Severity of the timetabling problem", :default => 4
-  opt :mutation, "Mutation used in the algorithm", :default => "TripleSwapperWithTwoCollidingConstraints"
-  opt :recombination, "Recombination used in the algorithm", :default => "Identity"
+  opt :mutation, "Mutation used in the algorithm", :default => "TripleSwapperWithTwoCollidingPeriods"
+  opt :recombination, "Recombination used in the algorithm", :default => "Mapping"
   opt :iterations, "Algorithm will stop after given number of iterations or run indefinitely if 0", :default => 0
   opt :time_limit, "Algorithm will stop after given time limit or run indefinitely if 0", :default => 0
   opt :evaluations, "Algorithm will stop after given number of evaluations (= childs per generation * iterations + population size) or run indefinitely if 0", :default => 5_000_000
