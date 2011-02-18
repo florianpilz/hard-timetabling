@@ -2,7 +2,7 @@ Konzept.pages
 Konzept.pdf
 Stundenplanung.*
 .DS_Store
-output-old
+hillclimber-output
 output
 kernkraft.sh
 kernkraft-script-generator.rb
