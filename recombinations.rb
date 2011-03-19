@@ -155,3 +155,19 @@ class MinCollisionsEdgeRecombination < Recombination
     end
   end
 end
+
+class MinCollisionsInPeriodEdgeRecombination < Recombination
+  include EdgeRecombinationTemplate
+  
+  def call(individual1, individual2)
+    slot_size = individual1.constraints.length / individual1.number_of_slots
+    call_template(individual1, individual2) do |constraint, _, _, current_constraints|
+      constraints_in_current_period = current_constraints.length % slot_size
+      cloned_constraints = current_constraints.clone
+      neighbours = []
+      constraints_in_current_period.times {neighbours << cloned_constraints.pop}
+      
+      neighbours.inject(0){|sum, n| sum += calc_collisions(n, constraint)}
+    end
+  end
+end
