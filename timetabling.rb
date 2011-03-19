@@ -5,7 +5,77 @@ require 'base'
 require 'mutations'
 require 'recombinations'
 require 'selections'
-require 'trollop'
+
+require 'ostruct'
+require 'optparse'
+
+class Parser
+  attr_accessor :banner, :version
+
+  def initialize
+    @options = []
+    @used_short = []
+    yield self
+  end
+
+  def option(name, desc, settings = {})
+    @options << [name, desc, settings]
+  end
+
+  def short_from(name)
+    name.to_s.chars.each do |c|
+      next if @used_short.include?(c) || c == "_"
+      return c # returns from short_from method
+    end
+  end
+
+  def validate(options) # remove this method if you want fewer lines of code and don't need validations
+    options.each_pair do |key, value|
+      opt = @options.find_all{ |o| o[0] == key }.first
+      key = "--" << key.to_s.gsub("_", "-")
+      unless opt[2][:value_in_set].nil? || opt[2][:value_in_set].include?(value)
+        puts "Parameter for #{key} must be one of [" << opt[2][:value_in_set].join(", ") << "]" ; exit(1)
+      end
+      unless opt[2][:value_matches].nil? || opt[2][:value_matches] =~ value
+        puts "Parameter for #{key} must match /" << opt[2][:value_matches].source << "/" ; exit(1)
+      end
+      unless opt[2][:value_satisfies].nil? || opt[2][:value_satisfies].call(value)
+        puts "Parameter for #{key} must satisfy given conditions (see description)" ; exit(1)
+      end
+    end
+  end
+
+  def process!
+    options = {}
+    optionparser = OptionParser.new do |p|
+      @options.each do |o|
+        @used_short << short = o[2][:short] || short_from(o[0])
+        options[o[0]] = o[2][:default] || false # set default
+        klass = o[2][:default].class == Fixnum ? Integer : o[2][:default].class
+
+        if [TrueClass, FalseClass, NilClass].include?(klass) # boolean switch
+          p.on("-" << short, "--[no-]" << o[0].to_s.gsub("_", "-"), o[1]) {|x| options[o[0]] = x}
+        else # argument with parameter
+          p.on("-" << short, "--" << o[0].to_s.gsub("_", "-") << " " << o[2][:default].to_s, klass, o[1]) {|x| options[o[0]] = x}
+        end
+      end
+
+      p.banner = @banner unless @banner.nil?
+      p.on_tail("-h", "--help", "Show this message") {puts p ; exit}
+      short = @used_short.include?("v") ? "-V" : "-v"
+      p.on_tail(short, "--version", "Print version") {puts @version ; exit} unless @version.nil?
+    end
+
+    begin
+      optionparser.parse!(ARGV)
+    rescue OptionParser::ParseError => e
+      puts e.message ; exit(1)
+    end
+
+    validate(options) if self.respond_to?("validate")
+    options
+  end
+end
 
 module Timetabling
   @print_info = false
@@ -89,7 +159,7 @@ module Timetabling
     filtered_lines = lines.grep(/class .* < #{superclass}/)
     matches = []
     filtered_lines.each{|line| line.scan(/class (.*) < #{superclass}/){|m| matches << m.first.sub(superclass, "")}}
-    matches.join("\n")
+    matches
   end
 end
 
@@ -97,45 +167,29 @@ Signal.trap("TSTP") do |x| # Control-Z
   Timetabling::print_info = true
 end
 
-options = Trollop::options do
-  version "hard timetabling 2.1 (c) Florian Pilz"
-  banner <<-EOS
-timetabling is an evolutionary algorithm to solve hard-timetabling problems.
+options = Parser.new do |p|
+  p.version = "hard timetabling 2.1 (c) Florian Pilz"
+  p.banner = "Timetabling is an evolutionary algorithm to solve hard-timetabling problems."
+  p.option :severity, "Severity of the timetabling problem", :default => 4, :value_in_set => [4,5,6,7,8]
+  p.option :mutation, "Mutation used in the algorithm", :default => "TripleSwapperWithTwoCollidingPeriods", :value_in_set => Timetabling::read_possibilities("mutations.rb", "Mutation")
+  p.option :recombination, "Recombination used in the algorithm", :default => "Mapping", :value_in_set => Timetabling::read_possibilities("recombinations.rb", "Recombination")
+  p.option :iterations, "Algorithm will stop after given number of iterations or run indefinitely if 0", :default => 0
+  p.option :time_limit, "Algorithm will stop after given time limit or run indefinitely if 0", :default => 0
+  p.option :evaluations, "Algorithm will stop after given number of evaluations (= childs per generation * iterations + population size) or run indefinitely if 0", :default => 5_000_000
+  p.option :cycles, "Determines how often the algorithm will be run", :default => 1, :value_satisfies => lambda{|x| x > 0}
+  p.option :population_size, "Size of the population", :default => 1, :value_satisfies => lambda{|x| x > 0}
+  p.option :childs, "Number of childs generated each iteration", :default => 1, :short => "l", :value_satisfies => lambda{|x| x > 0}
+  p.option :recombination_chance, "Chance that recombination is used to generate child", :default => 0.0, :value_satisfies => lambda{|x| x >= 0.0 && x <= 1.0}
+  p.option :mutation_chance, "Chance that mutation is used, after recombination was used", :default => 1.0, :value_satisfies => lambda{|x| x >= 0.0 && x <= 1.0}
+  p.option :parents_die, "Parents will die each iteration if set, i.e. a comma-selection is used", :default => false
+  p.option :environmental_selection, "Selection used to determine which individuals will form the next generation", :default => "Best", :value_in_set => Timetabling::read_possibilities("selections.rb", "Selection")
+  p.option :stages, "Number of stages if NStageTournamentSelection is used", :default => 3
+end.process!
 
-Usage:
-  ruby timetabling.rb [options]
-where [options] are:
-EOS
-  opt :severity, "Severity of the timetabling problem", :default => 4
-  opt :mutation, "Mutation used in the algorithm", :default => "TripleSwapperWithTwoCollidingPeriods"
-  opt :recombination, "Recombination used in the algorithm", :default => "Mapping"
-  opt :iterations, "Algorithm will stop after given number of iterations or run indefinitely if 0", :default => 0
-  opt :time_limit, "Algorithm will stop after given time limit or run indefinitely if 0", :default => 0
-  opt :evaluations, "Algorithm will stop after given number of evaluations (= childs per generation * iterations + population size) or run indefinitely if 0", :default => 5_000_000
-  opt :cycles, "Determines how often the algorithm will be run", :default => 1
-  opt :population_size, "Size of the population", :default => 1
-  opt :childs, "Number of childs generated each iteration", :default => 1, :short => "l"
-  opt :recombination_chance, "Chance that recombination is used to generate child", :default => 0.0
-  opt :mutation_chance, "Chance that mutation is used, after recombination was used", :default => 1.0
-  opt :parents_die, "Parents will die each iteration if set, i.e. a comma-selection is used", :default => false
-  opt :environmental_selection, "Selection used to determine which individuals will form the next generation", :default => "Best"
-  opt :stages, "Number of stages if NStageTournamentSelection is used", :default => 3
-end
-
-# validations
-Trollop::die :severity, "must be in [4, 5, 6, 7, 8]" unless [4,5,6,7,8].include?(options[:severity])
-
-mutation = Kernel.const_get(options[:mutation] + "Mutation").new rescue Trollop::die(:mutation, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("mutations.rb", "Mutation"))
-
-recombination = Kernel.const_get(options[:recombination] + "Recombination").new rescue Trollop::die(:recombination, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("recombinations.rb", "Recombination"))
-
-environmental_selection = Kernel.const_get(options[:environmental_selection] + "Selection").new rescue Trollop::die(:environmental_selection, "is invalid, must be one of the following:\n" << Timetabling::read_possibilities("selections.rb", "Selection"))
-
-Trollop::die :cycles, "must be 1 or greater" unless options[:cycles] > 0
-Trollop::die :population_size, "must be 1 or greater" unless options[:population_size] > 0
-Trollop::die :childs, "must be 1 or greater" unless options[:childs] > 0
-Trollop::die :recombination_chance, "must be in [0, 1]" unless options[:recombination_chance] >= 0.0 && options[:recombination_chance] <= 1.0
-Trollop::die :mutation_chance, "must be in [0, 1]" unless options[:mutation_chance] >= 0.0 && options[:mutation_chance] <= 1.0
+# load mutation, recombination, selection
+mutation = Kernel.const_get(options[:mutation] + "Mutation").new
+recombination = Kernel.const_get(options[:recombination] + "Recombination").new
+environmental_selection = Kernel.const_get(options[:environmental_selection] + "Selection").new
 
 # start algorithm
 constraints = Timetabling::read_timetable_data(options[:severity])
