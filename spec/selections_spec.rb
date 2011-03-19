@@ -64,7 +64,7 @@ describe "Selections" do
     it "yields appropriately chosen individuals" do
       selection = subject.select(5, @population, {:stages => 2})
       selection.length.should == 5
-      selection.should_not include(@ten) # may fail if (nearly) every individual won 0 times
+      selection.should_not include(@ten) # may fail if (nearly) every individual won 0 times
       selection.should == selection.uniq # no duplicates
       selection.each do |individual|
         individual.class.should == MockIndividual
