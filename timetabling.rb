@@ -7,12 +7,6 @@ require 'recombinations'
 require 'selections'
 require 'trollop'
 
-# offene Fragen:
-# - Beweis, dass Menge von clashing_periods durch gegenseitigen Austausch nicht zwingend zur Lösung führt
-# - Beweis, dass nur Austausch der Constraints die clashing hervorrufen genügt
-# - Beweis, dass Austausch von Constraints zwischen clashing_periods und nonclashing_periods genügt
-# - zurücktauschen bei brute force wichtig?
-
 module Timetabling
   @print_info = false
   
