@@ -16,3 +16,4 @@ The timetable-data was retrieved from http://people.brunel.ac.uk/~mastjjb/jeb/or
 You need rspec 2.4.0 to run the test. For automatic testing install watchr and type "watchr watchr.rb"
 
 All files are licensed under the MIT license. See MIT-LICENSE for details.
+

@@ -57,3 +57,4 @@ class UniformSelection < Selection
     selection
   end
 end
+

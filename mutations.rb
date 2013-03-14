@@ -280,3 +280,4 @@ class ShiftingMutation < Mutation
     child
   end
 end
+

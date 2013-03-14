@@ -197,3 +197,4 @@ constraints = Timetabling::read_timetable_data(options[:severity])
 options[:cycles].times do
   Timetabling::run(options.merge({:constraints => constraints, :mutation => mutation, :recombination => recombination, :environmental_selection => environmental_selection, :number_of_slots => 30}))
 end
+

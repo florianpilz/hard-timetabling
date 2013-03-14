@@ -220,3 +220,4 @@ describe Individual do # TODO add tests for different granularity
     child.should_not == subject
   end
 end
+
