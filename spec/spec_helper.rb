@@ -49,3 +49,4 @@ describe "individual_generator" do
     subject.collisions.should == MAX_COLLISIONS
   end
 end
+

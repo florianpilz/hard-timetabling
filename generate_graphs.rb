@@ -112,3 +112,4 @@ files_hddt4.each_with_index do |filename, i|
 end
 g.labels = hdtt4_labels
 g.write('output/iterations_per_collision4.png')
+

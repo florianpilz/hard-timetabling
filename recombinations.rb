@@ -171,3 +171,4 @@ class MinCollisionsInPeriodEdgeRecombination < Recombination
     end
   end
 end
+
