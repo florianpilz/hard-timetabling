@@ -1,10 +1,10 @@
 # Copyright (c) 2011 Florian Pilz
 # See MIT-LICENSE for license information.
 
-require 'base'
-require 'mutations'
-require 'recombinations'
-require 'selections'
+require './base.rb'
+require './mutations.rb'
+require './recombinations.rb'
+require './selections.rb'
 
 require 'ostruct'
 require 'optparse'
